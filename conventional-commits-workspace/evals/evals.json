@@ -1,0 +1,61 @@
+{
+  "skill_name": "conventional-commits",
+  "evals": [
+    {
+      "id": 0,
+      "name": "bugfix-no-config",
+      "fixture": "bugfix_no_config.sh",
+      "prompt": "I fixed that off-by-one in the date range helper we talked about \u2014 dateRange was dropping the end date even though the doc comment says inclusive. tests updated too. commit it",
+      "expected_output": "A single fix(range) commit with an imperative lowercase description mentioning the inclusive end date; body optional; no push.",
+      "files": [],
+      "assertions": [
+        "At least one new commit was created",
+        "Every new commit header matches type(scope)!: description",
+        "Descriptions start lowercase and have no trailing period",
+        "Proposed message was shown for approval before committing (notes.md)",
+        "Exactly one commit was made",
+        "Type is fix",
+        "Scope reuses repo's existing 'range' scope",
+        "Working tree is clean (both staged files committed)"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "commitlint-breaking-flag-rename",
+      "fixture": "commitlint_breaking.sh",
+      "prompt": "renamed the --out flag to --output in the cli (and updated the readme). go ahead and commit the staged stuff",
+      "expected_output": "A commit that satisfies the repo's commitlint config (allowed type, scope required and in [api, cli, core], header <= 60 chars) and marks the breaking change with ! and/or a BREAKING CHANGE footer explaining migration.",
+      "files": [],
+      "assertions": [
+        "At least one new commit was created",
+        "Every new commit header matches type(scope)!: description",
+        "Descriptions start lowercase and have no trailing period",
+        "Proposed message was shown for approval before committing (notes.md)",
+        "Type is in repo's type-enum",
+        "Scope present and in scope-enum [api, cli, core]",
+        "Header <= 60 chars (repo header-max-length)",
+        "Header marks breaking change with !",
+        "Has BREAKING CHANGE footer",
+        "Body/footer lines <= 100 chars"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "unstaged-mixed-with-secret",
+      "fixture": "unstaged_mixed.sh",
+      "prompt": "can u write a commit msg for my changes and commit them? havent staged anything yet",
+      "expected_output": "Does not commit .env (secret). Recognizes the verbose-logging feature and the unrelated README typo fix; either splits into feat + docs commits or flags the mix. All commits conventional.",
+      "files": [],
+      "assertions": [
+        "At least one new commit was created",
+        "Every new commit header matches type(scope)!: description",
+        "Descriptions start lowercase and have no trailing period",
+        "Proposed message was shown for approval before committing (notes.md)",
+        ".env (contains secret) was NOT committed",
+        "All three source/doc files were committed",
+        "Verbose-logging change committed as feat",
+        "README typo fix in a separate docs commit"
+      ]
+    }
+  ]
+}
