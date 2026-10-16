@@ -1,0 +1,10 @@
+{
+  "name": "commits",
+  "version": "0.1.0",
+  "description": "Write git commit messages that follow the Conventional Commits 1.0.0 specification, respecting repo commitlint/commitizen config.",
+  "author": {
+    "name": "Alex Cristea",
+    "email": "alexcristea@me.com"
+  },
+  "keywords": ["git", "commit", "conventional-commits", "commitlint"]
+}
