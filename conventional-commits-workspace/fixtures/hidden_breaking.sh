@@ -42,3 +42,4 @@ from billing.totals import compute_total
 __all__ = ["compute_total"]
 P
 git add -A
+git config fixture.stagedtree "$(git write-tree)"

@@ -89,6 +89,7 @@
         "Descriptions start lowercase and have no trailing period",
         "Proposed message was shown for approval before committing (notes.md)",
         "Exactly one commit was made",
+        "Committed the user's staged code unmodified",
         "Header marks breaking change with !",
         "Has BREAKING CHANGE footer",
         "Breaking note covers tax_rate -> rate rename",

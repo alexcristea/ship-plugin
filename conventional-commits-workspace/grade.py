@@ -122,6 +122,10 @@ def eval_hidden_breaking(commits, repo):
     footer = msg[msg.find("BREAKING"):] if "BREAKING" in msg else ""
     return [
         check("Exactly one commit was made", len(commits) == 1, f"{len(commits)} commits"),
+        check("Committed the user's staged code unmodified",
+              git(repo, "rev-parse", "HEAD^{tree}").strip() == git(repo, "config", "fixture.stagedtree").strip(),
+              "tree matches staged" if git(repo, "rev-parse", "HEAD^{tree}").strip()
+              == git(repo, "config", "fixture.stagedtree").strip() else "agent changed the code before committing"),
         check("Header marks breaking change with !", p and p["bang"], msg.splitlines()[0] if msg else "none"),
         check("Has BREAKING CHANGE footer", re.search(r"^BREAKING[ -]CHANGE: \S", msg, re.M), "found" if footer else "missing"),
         check("Breaking note covers tax_rate -> rate rename", "tax_rate" in footer, footer[:120] or "no footer"),

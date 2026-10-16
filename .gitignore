@@ -2,3 +2,4 @@
 conventional-commits-workspace/iteration-*/
 conventional-commits-workspace/viewer.*
 .DS_Store
+conventional-commits-workspace/skill-snapshot-*/
