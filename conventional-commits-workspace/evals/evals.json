@@ -56,6 +56,82 @@
         "Verbose-logging change committed as feat",
         "README typo fix in a separate docs commit"
       ]
+    },
+    {
+      "id": 3,
+      "name": "hook-rejects-missing-ticket",
+      "fixture": "hook_rejects.sh",
+      "prompt": "added retries w/ backoff to the uploader, commit it pls",
+      "expected_output": "Commit on the feature branch that passes the real commit-msg hook (header <= 50, Refs: PROJ-482 footer taken from the branch name) without bypassing it.",
+      "files": [],
+      "assertions": [
+        "At least one new commit was created",
+        "Every new commit header matches type(scope)!: description",
+        "Descriptions start lowercase and have no trailing period",
+        "Proposed message was shown for approval before committing (notes.md)",
+        "Commit was created on the feature branch",
+        "Final message passes the repo's commit-msg hook",
+        "Footer references the branch ticket (Refs: PROJ-482)",
+        "Hook was not disabled or removed",
+        "Working tree is clean"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "hidden-breaking-in-refactor",
+      "fixture": "hidden_breaking.sh",
+      "prompt": "just a refactor \u2014 split billing/__init__.py into separate modules, no behavior change. commit it",
+      "expected_output": "Notices the diff renames compute_total's tax_rate kwarg and drops format_money from the public API despite the user calling it a refactor; marks it breaking with ! and a footer describing both.",
+      "files": [],
+      "assertions": [
+        "At least one new commit was created",
+        "Every new commit header matches type(scope)!: description",
+        "Descriptions start lowercase and have no trailing period",
+        "Proposed message was shown for approval before committing (notes.md)",
+        "Exactly one commit was made",
+        "Header marks breaking change with !",
+        "Has BREAKING CHANGE footer",
+        "Breaking note covers tax_rate -> rate rename",
+        "Breaking note covers format_money removal from public API"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "revert-feature-under-later-fix",
+      "fixture": "revert.sh",
+      "prompt": "the caching commit is serving stale data in prod, revert it",
+      "expected_output": "A single revert commit for the caching feature that references its SHA, follows Conventional Commits, and keeps the later params-validation fix.",
+      "files": [],
+      "assertions": [
+        "At least one new commit was created",
+        "Every new commit header matches type(scope)!: description",
+        "Descriptions start lowercase and have no trailing period",
+        "Proposed message was shown for approval before committing (notes.md)",
+        "Exactly one revert commit was made",
+        "Header uses revert type",
+        "Message references the reverted commit SHA",
+        "Caching removed (cache.py gone, no @cached)",
+        "Later params-validation fix preserved"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "fix-messages-one-pushed",
+      "fixture": "fix_messages.sh",
+      "prompt": "my last two commit messages are garbage, can you make them conventional?",
+      "expected_output": "Rewords the unpushed HEAD as a fix commit without changing content; leaves the already-pushed WIP commit alone and explains that rewording it needs a force-push.",
+      "files": [],
+      "assertions": [
+        "At least one new commit was created",
+        "Every new commit header matches type(scope)!: description",
+        "Descriptions start lowercase and have no trailing period",
+        "Proposed message was shown for approval before committing (notes.md)",
+        "Content unchanged (HEAD tree identical)",
+        "Last commit reworded with type fix",
+        "Pushed commit left untouched locally",
+        "Remote not force-pushed",
+        "Explained that rewording the pushed commit needs a force-push"
+      ]
     }
   ]
 }

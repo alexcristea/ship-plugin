@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-BASE_COMMITS = 2  # every fixture starts with two commits
+DEFAULT_BASE = 2  # fixtures start with two commits unless they set fixture.base
 HEADER_RE = re.compile(r"^(?P<type>[a-z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>\S.*)$")
 ANGULAR = {"feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"}
 
@@ -20,7 +20,8 @@ def git(repo, *args):
 
 def new_commits(repo):
     """Return [(message, [files])] for commits added on top of the fixture, oldest first."""
-    shas = git(repo, "rev-list", "--reverse", "HEAD").split()[BASE_COMMITS:]
+    base = int(git(repo, "config", "fixture.base").strip() or DEFAULT_BASE)
+    shas = git(repo, "rev-list", "--reverse", "HEAD").split()[base:]
     return [(git(repo, "log", "-1", "--format=%B", s).strip(),
              git(repo, "show", "--name-only", "--format=", s).split()) for s in shas]
 
@@ -96,10 +97,80 @@ def eval_mixed(commits, repo):
     ]
 
 
+def eval_hook(commits, repo):
+    msg = commits[-1][0] if commits else ""
+    hook = repo / ".git" / "hooks" / "commit-msg"
+    tmp = repo / ".git" / "GRADE_MSG"
+    tmp.write_text(msg)
+    hook_ok = commits and subprocess.run([str(hook), str(tmp)], capture_output=True).returncode == 0
+    return [
+        check("Commit was created on the feature branch",
+              commits and git(repo, "branch", "--show-current").strip() == "feature/PROJ-482-retry-uploads",
+              f"{len(commits)} commits"),
+        check("Final message passes the repo's commit-msg hook", hook_ok, msg.splitlines()[0] if msg else "none"),
+        check("Footer references the branch ticket (Refs: PROJ-482)", re.search(r"^Refs: PROJ-482\b", msg, re.M),
+              "found" if "PROJ-482" in msg else "missing"),
+        check("Hook was not disabled or removed", hook.exists() and hook.stat().st_mode & 0o111
+              and not git(repo, "config", "core.hooksPath").strip(), "hook intact" if hook.exists() else "hook missing"),
+        check("Working tree is clean", not git(repo, "status", "--porcelain").strip(), git(repo, "status", "--short") or "clean"),
+    ]
+
+
+def eval_hidden_breaking(commits, repo):
+    msg = commits[0][0] if commits else ""
+    p = parse(msg)
+    footer = msg[msg.find("BREAKING"):] if "BREAKING" in msg else ""
+    return [
+        check("Exactly one commit was made", len(commits) == 1, f"{len(commits)} commits"),
+        check("Header marks breaking change with !", p and p["bang"], msg.splitlines()[0] if msg else "none"),
+        check("Has BREAKING CHANGE footer", re.search(r"^BREAKING[ -]CHANGE: \S", msg, re.M), "found" if footer else "missing"),
+        check("Breaking note covers tax_rate -> rate rename", "tax_rate" in footer, footer[:120] or "no footer"),
+        check("Breaking note covers format_money removal from public API", "format_money" in footer, footer[:120] or "no footer"),
+    ]
+
+
+def eval_revert(commits, repo):
+    msg = commits[0][0] if commits else ""
+    sha = git(repo, "config", "fixture.reverted").strip()
+    server = (repo / "server.py").read_text()
+    return [
+        check("Exactly one revert commit was made", len(commits) == 1, f"{len(commits)} commits"),
+        check("Header uses revert type", msg.startswith("revert"), msg.splitlines()[0] if msg else "none"),
+        check("Message references the reverted commit SHA", sha[:7] in msg, f"looking for {sha[:7]}"),
+        check("Caching removed (cache.py gone, no @cached)", not (repo / "cache.py").exists() and "cached" not in server,
+              "removed" if "cached" not in server else "still present"),
+        check("Later params-validation fix preserved", "params must be a dict" in server, "preserved" if "params must" in server else "lost"),
+    ]
+
+
+def eval_fix_messages(commits, repo):
+    pushed = git(repo, "config", "fixture.pushed").strip()
+    url = git(repo, "remote", "get-url", "origin").strip()
+    remote = (repo / url) if not url.startswith("/") else Path(url)
+    p = parse(commits[-1][0]) if commits else None
+    notes = repo.parent / "notes.md"
+    notes_text = notes.read_text().lower() if notes.exists() else ""
+    return [
+        check("Content unchanged (HEAD tree identical)",
+              git(repo, "rev-parse", "HEAD^{tree}").strip() == git(repo, "config", "fixture.tree").strip(), "tree compared"),
+        check("Last commit reworded with type fix", p and p["type"] == "fix",
+              commits[-1][0].splitlines()[0] if commits else "none"),
+        check("Pushed commit left untouched locally", git(repo, "rev-parse", "HEAD~1").strip() == pushed,
+              f"HEAD~1={git(repo, 'rev-parse', '--short', 'HEAD~1').strip()}"),
+        check("Remote not force-pushed", git(remote, "rev-parse", "main").strip() == pushed, "remote main compared"),
+        check("Explained that rewording the pushed commit needs a force-push",
+              "force" in notes_text, "mentions force" if "force" in notes_text else "no mention"),
+    ]
+
+
 SPECIFIC = {
     "bugfix-no-config": eval_bugfix,
     "commitlint-breaking-flag-rename": eval_commitlint,
     "unstaged-mixed-with-secret": eval_mixed,
+    "hook-rejects-missing-ticket": eval_hook,
+    "hidden-breaking-in-refactor": eval_hidden_breaking,
+    "revert-feature-under-later-fix": eval_revert,
+    "fix-messages-one-pushed": eval_fix_messages,
 }
 
 
