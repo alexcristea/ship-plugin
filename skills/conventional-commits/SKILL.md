@@ -68,6 +68,8 @@ Defaults: header at most 100 characters (aim for 72 or less, because many tools 
 
 The `!` makes the change visible in one-line logs. The footer tells people how to upgrade.
 
+**When the diff contradicts what the user said.** People describe their changes from memory: "just a refactor", "no behavior change", "only docs". If the diff shows something else, such as a renamed public argument, a dropped export, or a changed default, trust the diff. Tell the user exactly what you found and point to the lines. Don't edit their code to make their description true, even when the fix looks obvious. You were asked to commit, and changing staged code during a commit means the user ships something they never reviewed. Give them two options: commit as-is with an accurate message (breaking change marked), or restore compatibility first, either themselves or by you if they ask for it. Recommend committing as-is unless they say otherwise. An accurate message is never wrong, while a silent code change can be.
+
 **Several unrelated changes in one diff.** If the staged changes do unrelated things (for example a feature plus an unrelated typo fix in another module), say so and offer to split them into separate commits. One commit per logical change keeps changelogs accurate and reverts clean. If the user wants a single commit anyway, use the type of the most significant change and mention the rest in the body.
 
 ## 4. Write the message
