@@ -1,6 +1,6 @@
 # ship
 
-A Claude Code plugin with git workflow skills for shipping changes. Today it has one skill, `commit`, which writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message.
+A Claude Code plugin for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. Today it has one skill, `commit`, which writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message.
 
 You say "commit this". Claude reads the staged diff, checks the repo's commitlint or commitizen config, drafts a `type(scope)!: description` message with a body and footers where they help, shows it to you, and commits on your OK.
 

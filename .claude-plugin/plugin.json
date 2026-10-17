@@ -1,11 +1,11 @@
 {
   "name": "ship",
   "version": "0.1.0",
-  "description": "Git workflow skills for shipping changes. commit: write git commit messages that follow the Conventional Commits 1.0.0 specification, respecting repo commitlint/commitizen config.",
+  "description": "Skills for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. commit: write Conventional Commits 1.0.0 messages that respect the repo's commitlint/commitizen config.",
   "author": {
     "name": "Alex Cristea",
     "email": "alexcristea@me.com"
   },
   "license": "MIT",
-  "keywords": ["git", "commit", "conventional-commits", "commitlint"]
+  "keywords": ["trunk-based-development", "git", "commit", "conventional-commits", "commitlint"]
 }
