@@ -63,11 +63,11 @@ class CommitGrader(unittest.TestCase):
         subprocess.run(["bash", str(EVALS / "commit" / "fixtures" / "bugfix_no_config.sh"), str(self.repo)],
                        check=True, capture_output=True)
 
-    def grade_commit(self, message):
+    def grade_commit(self, message, **kwargs):
         subprocess.run(["git", "-C", str(self.repo), "commit", "-q", "-m", message], check=True)
         (self.run_dir / "outputs" / "notes.md").write_text(f"```\n{message}\n```\n")
         with contextlib.redirect_stdout(io.StringIO()):
-            self.grade.main(self.iteration)
+            self.grade.main(self.iteration, **kwargs)
         return json.loads((self.run_dir / "grading.json").read_text())
 
     def test_good_commit_passes_every_check(self):
@@ -88,6 +88,21 @@ class CommitGrader(unittest.TestCase):
             "Type is fix",
             "Scope reuses repo's existing 'range' scope",
         })
+
+    def test_records_skill_sha_and_model_for_the_iteration(self):
+        self.grade_commit("fix(range): include the end date in dateRange", model="claude-opus-5-5")
+        info = json.loads((self.iteration / "run.json").read_text())
+        head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+                              capture_output=True, text=True, check=True).stdout.strip()
+        self.assertEqual(info["skill"], "commit")
+        self.assertEqual(info["skill_sha"], head)
+        self.assertIsInstance(info["skill_dirty"], bool)
+        self.assertEqual(info["model"], "claude-opus-5-5")
+        self.assertIn("graded_at", info)
+
+    def test_model_is_optional(self):
+        self.grade_commit("fix(range): include the end date in dateRange")
+        self.assertIsNone(json.loads((self.iteration / "run.json").read_text())["model"])
 
 
 if __name__ == "__main__":

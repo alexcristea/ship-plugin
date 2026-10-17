@@ -43,10 +43,10 @@ Build one eval fixture (a throwaway git repo):
 bash evals/commit/fixtures/<fixture>.sh /path/to/scratch/<fixture>/repo
 ```
 
-Grade a finished eval iteration (writes `grading.json` per run, prints pass counts):
+Grade a finished eval iteration (writes `grading.json` per run and `run.json` with skill SHA and model):
 
 ```sh
-python3 evals/commit/grade.py .eval-runs/commit/iteration-<N>
+python3 evals/commit/grade.py .eval-runs/commit/iteration-<N> --model <model-id>
 ```
 
 Trigger eval for the description, run from skill-creator's `skills/skill-creator` directory. Keep `--num-workers 1`: parallel workers write near-identical temp skills to the same commands folder and corrupt results. Run from a scratch dir with its own `.claude/`.

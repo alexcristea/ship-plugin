@@ -1,14 +1,18 @@
 """Grade eval runs by inspecting each run's resulting git repo.
 
-usage: python3 grade.py <iteration-dir>
-Writes grading.json into every <eval>/<config>/ run directory.
+usage: python3 grade.py <iteration-dir> [--model <model-id>]
+Writes grading.json into every <eval>/<config>/ run directory, and run.json into the iteration
+directory recording which skill commit and model the iteration was graded against.
 """
+import argparse
 import json
 import re
 import subprocess
-import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
+SKILL = Path(__file__).resolve().parent.name  # evals/<skill>/grade.py
+ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BASE = 2  # fixtures start with two commits unless they set fixture.base
 HEADER_RE = re.compile(r"^(?P<type>[a-z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>\S.*)$")
 ANGULAR = {"feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"}
@@ -178,7 +182,19 @@ SPECIFIC = {
 }
 
 
-def main(iteration):
+def write_run_info(iteration, model):
+    dirty = git(ROOT, "status", "--porcelain", "--", f"skills/{SKILL}").strip()
+    (Path(iteration) / "run.json").write_text(json.dumps({
+        "skill": SKILL,
+        "skill_sha": git(ROOT, "rev-parse", "HEAD").strip(),
+        "skill_dirty": bool(dirty),
+        "model": model,
+        "graded_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }, indent=2))
+
+
+def main(iteration, model=None):
+    write_run_info(iteration, model)
     for eval_dir in sorted(Path(iteration).glob("eval-*")):
         name = eval_dir.name.split("-", 2)[2]  # eval-<id>-<name>
         for run_dir in sorted(eval_dir.glob("*/run-*")):
@@ -197,4 +213,8 @@ def main(iteration):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Grade an eval iteration.")
+    parser.add_argument("iteration")
+    parser.add_argument("--model", help="model the runs used, recorded in run.json")
+    args = parser.parse_args()
+    main(args.iteration, args.model)

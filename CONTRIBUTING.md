@@ -109,10 +109,10 @@ The evals run through the [skill-creator](https://github.com/anthropics/claude-p
 3. Grades the finished iteration:
 
    ```sh
-   python3 evals/commit/grade.py .eval-runs/commit/iteration-<N>
+   python3 evals/commit/grade.py .eval-runs/commit/iteration-<N> --model <model-id>
    ```
 
-`grade.py` checks the resulting git history, tree and remote, then writes a `grading.json` next to each run. Use skill-creator's `aggregate_benchmark` and the eval viewer to compare the configurations.
+`grade.py` checks the resulting git history, tree and remote, then writes a `grading.json` next to each run. It also writes `run.json` in the iteration folder with the skill's commit SHA, whether `skills/<skill>/` had uncommitted changes, the model, and the time, so an old iteration can still be traced to what it tested. Use skill-creator's `aggregate_benchmark` and the eval viewer to compare the configurations.
 
 When a change to the skill is accepted, update `evals/<skill>/baseline.json` with the new pass rates, SHA, model and date.
 
