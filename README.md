@@ -1,14 +1,14 @@
-# commits
+# ship
 
-A Claude Code plugin that writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/), and makes the commit once you approve the message.
+A Claude Code plugin with git workflow skills for shipping changes. Today it has one skill, `commit`, which writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message.
 
 You say "commit this". Claude reads the staged diff, checks the repo's commitlint or commitizen config, drafts a `type(scope)!: description` message with a body and footers where they help, shows it to you, and commits on your OK.
 
 ## What this plugin gives you
 
-| Skill                            | Purpose                                                                                       |
-|----------------------------------|-----------------------------------------------------------------------------------------------|
-| `/commits:conventional-commits`  | Draft a Conventional Commits message for the staged changes, then commit once you approve it. Also handles reverts and rewording existing messages. |
+| Skill          | Purpose                                                                                       |
+|----------------|-----------------------------------------------------------------------------------------------|
+| `/ship:commit` | Draft a Conventional Commits message for the staged changes, then commit once you approve it. Also handles reverts and rewording existing messages. |
 
 You rarely need the slash command. The skill triggers on ordinary requests such as "commit this", "write a commit msg", "what should I call this commit?" or "wrap this up in a commit", even when you never mention Conventional Commits.
 
@@ -24,8 +24,8 @@ commitlint, commitizen and husky are optional. If the repo uses them, the skill 
 From a local clone:
 
 ```sh
-git clone <this-repo-url> commits-plugin
-claude --plugin-dir /absolute/path/to/commits-plugin
+git clone <this-repo-url> ship
+claude --plugin-dir /absolute/path/to/ship
 ```
 
 ## Use cases
@@ -69,7 +69,7 @@ BREAKING CHANGE: --out is no longer accepted. Use --output instead.
 ## How it works
 
 ```
-skills/conventional-commits/
+skills/commit/
 ├── SKILL.md              # the workflow: inspect, check config, choose type, write, confirm, commit
 └── references/
     └── spec.md           # condensed Conventional Commits 1.0.0 rules, SemVer mapping, revert convention

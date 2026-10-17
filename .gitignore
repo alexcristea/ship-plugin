@@ -7,4 +7,4 @@
 __pycache__/
 
 # eval run output: iterations (with nested fixture git repos), viewer, snapshots
-conventional-commits-workspace/
+*-workspace/

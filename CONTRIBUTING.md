@@ -1,26 +1,26 @@
-# Contributing to commits
+# Contributing to ship
 
 This guide covers the repo layout, how to develop and test the plugin locally, and the conventions the project follows.
 
 ## Repository layout
 
 ```
-commits-plugin/
+ship/
 ├── .claude-plugin/
 │   └── plugin.json                  # plugin manifest
 ├── skills/
-│   └── conventional-commits/        # ships with the plugin; keep it free of test material
+│   └── commit/                      # ships with the plugin; keep it free of test material
 │       ├── SKILL.md
 │       └── references/spec.md
 ├── tests/
-│   └── conventional-commits/        # eval suite (committed)
+│   └── commit/                      # eval suite (committed)
 │       ├── evals/
 │       │   ├── evals.json           # behavior evals: prompt, fixture, assertions
 │       │   └── trigger_eval.json    # 20 queries for checking the description
 │       ├── fixtures/                # one script per eval; each builds a throwaway git repo
 │       │   └── common.sh            # shared setup sourced by every fixture
 │       └── grade.py                 # grades a finished iteration from its git repos
-├── conventional-commits-workspace/  # eval run output (gitignored)
+├── commit-workspace/                # eval run output (gitignored)
 ├── README.md
 ├── CONTRIBUTING.md
 └── LICENSE
@@ -35,7 +35,7 @@ The eval suite stays outside `skills/`. Claude can read anything in the skill fo
 
    ```sh
    cd /path/to/some/scratch-repo
-   claude --plugin-dir /absolute/path/to/commits-plugin
+   claude --plugin-dir /absolute/path/to/ship
    ```
 
 3. After editing `SKILL.md`, restart the session so the new version loads. `references/spec.md` is read when the skill needs it, so changes to it apply on the next use.
@@ -75,20 +75,20 @@ Each entry in `evals/evals.json` names a fixture, a user prompt and its assertio
 | `revert-feature-under-later-fix`   | Reverts one commit and keeps a later fix                                          |
 | `fix-messages-one-pushed`          | Rewords only the unpushed commit; doesn't force-push                              |
 
-The evals run through the [skill-creator](https://github.com/anthropics/claude-plugins-official) plugin. In Claude Code, ask it to run the next iteration of the `conventional-commits` evals. For each eval and each configuration (`with_skill`, `without_skill`), it:
+The evals run through the [skill-creator](https://github.com/anthropics/claude-plugins-official) plugin. In Claude Code, ask it to run the next iteration of the `commit` evals. For each eval and each configuration (`with_skill`, `without_skill`), it:
 
 1. Builds the fixture repo:
 
    ```sh
-   bash tests/conventional-commits/fixtures/<fixture>.sh \
-     conventional-commits-workspace/iteration-<N>/eval-<id>-<name>/<config>/run-1/outputs/repo
+   bash tests/commit/fixtures/<fixture>.sh \
+     commit-workspace/iteration-<N>/eval-<id>-<name>/<config>/run-1/outputs/repo
    ```
 
 2. Runs a subagent on the prompt inside that repo. The user isn't available during the run, so the agent writes what it would have shown or asked to `outputs/notes.md` and continues as if the answer were "yes, go ahead". It must not push.
 3. Grades the finished iteration:
 
    ```sh
-   python3 tests/conventional-commits/grade.py conventional-commits-workspace/iteration-<N>
+   python3 tests/commit/grade.py commit-workspace/iteration-<N>
    ```
 
 `grade.py` checks the resulting git history, tree and remote, then writes a `grading.json` next to each run. Use skill-creator's `aggregate_benchmark` and the eval viewer to compare the configurations.
@@ -96,7 +96,7 @@ The evals run through the [skill-creator](https://github.com/anthropics/claude-p
 To check fixtures without running Claude, build them all into a scratch directory:
 
 ```sh
-for f in tests/conventional-commits/fixtures/*.sh; do
+for f in tests/commit/fixtures/*.sh; do
   [ "$(basename "$f")" = common.sh ] && continue
   bash "$f" "/tmp/cc-fixtures/$(basename "$f" .sh)/repo"
 done
@@ -117,8 +117,8 @@ done
 
 ```sh
 python3 -m scripts.run_eval \
-  --eval-set /abs/path/tests/conventional-commits/evals/trigger_eval.json \
-  --skill-path /abs/path/skills/conventional-commits \
+  --eval-set /abs/path/tests/commit/evals/trigger_eval.json \
+  --skill-path /abs/path/skills/commit \
   --num-workers 1 --runs-per-query 2 --timeout 60 --verbose
 ```
 
