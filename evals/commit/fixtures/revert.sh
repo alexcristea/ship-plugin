@@ -1,6 +1,6 @@
 #!/bin/bash
 # Revert a feature commit that sits underneath a later, unrelated fix.
-source "$(dirname "$0")/common.sh" "$1"
+source "$(dirname "$0")/../../_shared/common.sh" "$1"
 cat > server.py <<'P'
 def handle(path, params):
     if path == "/health":

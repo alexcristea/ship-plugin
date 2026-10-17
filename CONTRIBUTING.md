@@ -12,21 +12,31 @@ ship/
 │   └── commit/                      # ships with the plugin; keep it free of test material
 │       ├── SKILL.md
 │       └── references/spec.md
-├── tests/
-│   └── commit/                      # eval suite (committed)
-│       ├── evals/
-│       │   ├── evals.json           # behavior evals: prompt, fixture, assertions
-│       │   └── trigger_eval.json    # 20 queries for checking the description
+├── evals/                           # eval definitions: run Claude, cost money (committed)
+│   ├── _shared/
+│   │   └── common.sh                # fixture setup shared by every skill
+│   └── commit/
+│       ├── cases.json               # behavior evals: prompt, fixture, assertions
+│       ├── triggers.json            # 20 queries for checking the description
 │       ├── fixtures/                # one script per eval; each builds a throwaway git repo
-│       │   └── common.sh            # shared setup sourced by every fixture
-│       └── grade.py                 # grades a finished iteration from its git repos
-├── commit-workspace/                # eval run output (gitignored)
+│       ├── grade.py                 # grades a finished iteration from its git repos
+│       └── baseline.json            # last recorded scores, to compare changes against
+├── tests/                           # deterministic checks of the eval tooling; no Claude
+│   ├── test_fixtures.sh
+│   └── test_grade.py
+├── .eval-runs/                      # eval run output, one folder per skill (gitignored)
 ├── README.md
 ├── CONTRIBUTING.md
 └── LICENSE
 ```
 
-The eval suite stays outside `skills/`. Claude can read anything in the skill folder while running the skill, so expected answers placed there could leak into real use.
+Evals and tests stay outside `skills/`. Claude can read anything in the skill folder while running the skill, so expected answers placed there could leak into real use.
+
+The three kinds of file are kept apart because they run at different times:
+
+- **`tests/`** is fast and free. Run it on every change.
+- **`evals/`** runs Claude, so it is slow and costs money. Run it when a skill or its description changes.
+- **`.eval-runs/`** is generated output with nested git repos. It is never committed. Only the summary in `baseline.json` is.
 
 ## Local development
 
@@ -61,9 +71,20 @@ The `description` in the frontmatter is all Claude sees when deciding whether to
 
 ## Testing
 
+### Tests
+
+The tests check the eval tooling itself: every fixture builds, every case in `cases.json` has a fixture and a grader, and `grade.py` scores a known-good and a known-bad commit correctly. A bug in a grader would otherwise make every benchmark wrong without anyone noticing.
+
+```sh
+bash tests/test_fixtures.sh
+python3 -m unittest discover -s tests
+```
+
+Run one test with `python3 -m unittest discover -s tests -k test_bad_commit_fails_the_matching_checks`.
+
 ### Behavior evals
 
-Each entry in `evals/evals.json` names a fixture, a user prompt and its assertions. The fixtures cover:
+Each entry in `evals/<skill>/cases.json` names a fixture, a user prompt and its assertions. The fixtures cover:
 
 | Eval                               | What it checks                                                                  |
 |------------------------------------|----------------------------------------------------------------------------------|
@@ -75,49 +96,43 @@ Each entry in `evals/evals.json` names a fixture, a user prompt and its assertio
 | `revert-feature-under-later-fix`   | Reverts one commit and keeps a later fix                                          |
 | `fix-messages-one-pushed`          | Rewords only the unpushed commit; doesn't force-push                              |
 
-The evals run through the [skill-creator](https://github.com/anthropics/claude-plugins-official) plugin. In Claude Code, ask it to run the next iteration of the `commit` evals. For each eval and each configuration (`with_skill`, `without_skill`), it:
+The evals run through the [skill-creator](https://github.com/anthropics/claude-plugins-official) plugin. In Claude Code, ask it to run the next iteration of the `commit` evals from `evals/commit/cases.json`, with `.eval-runs/commit/` as the workspace. Name both paths: by default skill-creator looks for `evals/evals.json` inside the skill and writes to `<skill>-workspace/`. For each eval and each configuration (`with_skill`, `without_skill`), it:
 
 1. Builds the fixture repo:
 
    ```sh
-   bash tests/commit/fixtures/<fixture>.sh \
-     commit-workspace/iteration-<N>/eval-<id>-<name>/<config>/run-1/outputs/repo
+   bash evals/commit/fixtures/<fixture>.sh \
+     .eval-runs/commit/iteration-<N>/eval-<id>-<name>/<config>/run-1/outputs/repo
    ```
 
 2. Runs a subagent on the prompt inside that repo. The user isn't available during the run, so the agent writes what it would have shown or asked to `outputs/notes.md` and continues as if the answer were "yes, go ahead". It must not push.
 3. Grades the finished iteration:
 
    ```sh
-   python3 tests/commit/grade.py commit-workspace/iteration-<N>
+   python3 evals/commit/grade.py .eval-runs/commit/iteration-<N>
    ```
 
 `grade.py` checks the resulting git history, tree and remote, then writes a `grading.json` next to each run. Use skill-creator's `aggregate_benchmark` and the eval viewer to compare the configurations.
 
-To check fixtures without running Claude, build them all into a scratch directory:
-
-```sh
-for f in tests/commit/fixtures/*.sh; do
-  [ "$(basename "$f")" = common.sh ] && continue
-  bash "$f" "/tmp/cc-fixtures/$(basename "$f" .sh)/repo"
-done
-```
+When a change to the skill is accepted, update `evals/<skill>/baseline.json` with the new pass rates, SHA, model and date.
 
 #### Adding an eval
 
-1. Write `fixtures/<name>.sh`. Source `common.sh`, create the history and stage the changes.
+1. Write `fixtures/<name>.sh`. Source `../../_shared/common.sh`, create the history and stage the changes.
    - If the fixture doesn't start with two commits, record the starting count with `git config fixture.base <n>`.
    - Record anything the grader compares against with `git config fixture.<key>`. Git config keys can't contain underscores, so use names like `fixture.stagedtree`.
-2. Add an entry to `evals/evals.json` with `id`, `name`, `fixture`, `prompt` and `assertions`.
+2. Add an entry to `cases.json` with `id`, `name`, `fixture`, `prompt` and `assertions`.
 3. Add an `eval_<name>()` check function to `grade.py`, and register it in `SPECIFIC`.
-4. Run the eval with and without the skill. A useful eval is one the baseline sometimes fails. If both configurations always pass, the eval doesn't tell them apart.
+4. Run `tests/`. They fail if the fixture doesn't build or the case has no grader.
+5. Run the eval with and without the skill. A useful eval is one the without-skill run sometimes fails. If both configurations always pass, the eval doesn't tell them apart.
 
 ### Trigger eval
 
-`evals/trigger_eval.json` has 10 queries that should trigger the skill and 10 near misses. Run it from skill-creator's `skills/skill-creator` directory:
+`evals/commit/triggers.json` has 10 queries that should trigger the skill and 10 near misses. Run it from skill-creator's `skills/skill-creator` directory:
 
 ```sh
 python3 -m scripts.run_eval \
-  --eval-set /abs/path/tests/commit/evals/trigger_eval.json \
+  --eval-set /abs/path/evals/commit/triggers.json \
   --skill-path /abs/path/skills/commit \
   --num-workers 1 --runs-per-query 2 --timeout 60 --verbose
 ```

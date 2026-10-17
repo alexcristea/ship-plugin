@@ -1,5 +1,5 @@
 #!/bin/bash
-source "$(dirname "$0")/common.sh" "$1"
+source "$(dirname "$0")/../../_shared/common.sh" "$1"
 mkdir -p src test
 cat > package.json <<'J'
 { "name": "daterange", "version": "1.2.0", "main": "src/range.js", "scripts": { "test": "node test/range.test.js" } }

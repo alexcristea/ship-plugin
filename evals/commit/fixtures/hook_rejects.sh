@@ -1,7 +1,7 @@
 #!/bin/bash
 # A commit-msg hook that really runs: header <= 50, lowercase subject,
 # and a required "Refs: PROJ-<n>" footer (the ticket is in the branch name).
-source "$(dirname "$0")/common.sh" "$1"
+source "$(dirname "$0")/../../_shared/common.sh" "$1"
 mkdir -p uploader
 cat > .commitlintrc.json <<'J'
 {

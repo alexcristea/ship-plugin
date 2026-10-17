@@ -1,0 +1,19 @@
+{
+  "skill": "commit",
+  "behavior": {
+    "skill_sha": "07bb565",
+    "model": null,
+    "date": "2026-10-16T09:08:18Z",
+    "evals": 7,
+    "runs_per_configuration": 3,
+    "pass_rate": { "with_skill": 1.0, "without_skill": 0.88 }
+  },
+  "triggers": {
+    "skill_sha": "07bb565",
+    "model": null,
+    "date": "2026-10-16",
+    "passed": 19,
+    "total": 20,
+    "note": "Stale: the description changed in cdebe51 (revert requests) and the full trigger set has not been re-run since."
+  }
+}
