@@ -1,5 +1,3 @@
-# eval run artifacts (contain nested fixture git repos)
-conventional-commits-workspace/iteration-*/
-conventional-commits-workspace/viewer.*
+# eval run output: iterations (with nested fixture git repos), viewer, snapshots
+conventional-commits-workspace/
 .DS_Store
-conventional-commits-workspace/skill-snapshot-*/
