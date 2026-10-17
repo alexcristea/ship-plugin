@@ -48,7 +48,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG if a.verbose else logging.WARNING)
     print(get_forecast(a.city))
 P
-sed -i '' 's/^import json$/import json\nimport logging\n\nlog = logging.getLogger(__name__)/' weatherbot/fetch.py
-sed -i '' 's/^    with urllib.request.urlopen/    log.debug("GET %s q=%s", API, city)\n    with urllib.request.urlopen/' weatherbot/fetch.py
-sed -i '' 's/forcast/forecast/' README.md
+sedi 's/^import json$/import json\nimport logging\n\nlog = logging.getLogger(__name__)/' weatherbot/fetch.py
+sedi 's/^    with urllib.request.urlopen/    log.debug("GET %s q=%s", API, city)\n    with urllib.request.urlopen/' weatherbot/fetch.py
+sedi 's/forcast/forecast/' README.md
 echo "WEATHER_API_KEY=sk_live_9f8a7b6c5d4e3f2a1b0c" > .env

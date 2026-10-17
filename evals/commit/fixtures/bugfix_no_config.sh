@@ -26,7 +26,7 @@ console.log('ok');
 J
 git add -A; c 1 "feat(range): add dateRange helper"
 echo "# daterange" > README.md; git add -A; c 2 "docs: add readme"
-sed -i '' 's/  while (d < last) {/  while (d <= last) {/' src/range.js
+sedi 's/  while (d < last) {/  while (d <= last) {/' src/range.js
 cat > test/range.test.js <<'J'
 const assert = require('assert');
 const { dateRange } = require('../src/range');

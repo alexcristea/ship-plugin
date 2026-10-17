@@ -39,6 +39,6 @@ J
 git add -A; c 1 "chore(core): initial commit"
 git commit -q --allow-empty -m "feat(cli): support -o shorthand for --out"
 # staged change: rename --out to --output, drop --out
-sed -i '' "s/args\[i\] === '--out'/args[i] === '--output'/" src/cli/index.js
-sed -i '' 's/imgpack --out build/imgpack --output build/' README.md
+sedi "s/args\[i\] === '--out'/args[i] === '--output'/" src/cli/index.js
+sedi 's/imgpack --out build/imgpack --output build/' README.md
 git add -A

@@ -119,6 +119,7 @@ When a change to the skill is accepted, update `evals/<skill>/baseline.json` wit
 #### Adding an eval
 
 1. Write `fixtures/<name>.sh`. Source `../../shared/common.sh`, create the history and stage the changes.
+   - Fixtures must build on both macOS and Linux. To edit a file in place, use `sedi <script> <file>` from `common.sh`, not `sed -i`, which takes different arguments in BSD and GNU sed.
    - If the fixture doesn't start with two commits, record the starting count with `git config fixture.base <n>`.
    - Record anything the grader compares against with `git config fixture.<key>`. Git config keys can't contain underscores, so use names like `fixture.stagedtree`.
 2. Add an entry to `cases.json` with `id`, `name`, `fixture`, `prompt` and `assertions`.
