@@ -24,8 +24,8 @@ commitlint, commitizen and husky are optional. If the repo uses them, the skill 
 From a local clone:
 
 ```sh
-git clone <this-repo-url> ship
-claude --plugin-dir /absolute/path/to/ship
+git clone https://github.com/alexcristea/ship-plugin.git
+claude --plugin-dir "$PWD/ship-plugin"
 ```
 
 ## Use cases

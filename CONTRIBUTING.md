@@ -5,7 +5,7 @@ This guide covers the repo layout, how to develop and test the plugin locally, a
 ## Repository layout
 
 ```
-ship/
+ship-plugin/
 ├── .claude-plugin/
 │   └── plugin.json                  # plugin manifest
 ├── skills/
@@ -45,7 +45,7 @@ The three kinds of file are kept apart because they run at different times:
 
    ```sh
    cd /path/to/some/scratch-repo
-   claude --plugin-dir /absolute/path/to/ship
+   claude --plugin-dir /absolute/path/to/ship-plugin
    ```
 
 3. After editing `SKILL.md`, restart the session so the new version loads. `references/spec.md` is read when the skill needs it, so changes to it apply on the next use.
