@@ -1,0 +1,22 @@
+[
+  {"query": "ok the auth middleware refactor is done and tests are green. can you commit it? our CI runs commitlint so it has to pass", "should_trigger": true},
+  {"query": "what should i call this commit? i staged src/payments/stripe_webhook.ts — added idempotency key handling so retried webhooks dont double charge", "should_trigger": true},
+  {"query": "looks good to me, wrap this up in a commit and we're done for today", "should_trigger": true},
+  {"query": "is this a valid conventional commit? 'Feat(API): Added new endpoint for listing users.' my teammate says the linter will reject it", "should_trigger": true},
+  {"query": "my last commit msg just says 'fixed stuff' lol. havent pushed yet, can you reword it to something proper based on what it actually changed", "should_trigger": true},
+  {"query": "I bumped lodash from 4.17.20 to 4.17.21 to patch the prototype pollution CVE. is that fix or build? write me the commit msg", "should_trigger": true},
+  {"query": "we use semantic-release on this repo and I just deleted the deprecated v1 /users endpoint. write the commit so it actually triggers a major bump", "should_trigger": true},
+  {"query": "revert 3f2a91c, it broke the checkout flow on staging. give the revert a proper message not the default git one", "should_trigger": true},
+  {"query": "husky keeps rejecting my commit: '✖ subject may not be empty [subject-empty] ✖ type may not be empty [type-empty]'. my message was 'Update README'. help", "should_trigger": true},
+  {"query": "i changed stuff in packages/ui and packages/api, theyre unrelated. commit them separately with good messages", "should_trigger": true},
+  {"query": "write a CHANGELOG.md section for v2.3.0 from these merged PR titles: 'Add dark mode', 'Fix login redirect loop', 'Bump axios'", "should_trigger": false},
+  {"query": "set up commitlint and husky in this repo so that everyone's commit messages get enforced on commit", "should_trigger": false},
+  {"query": "how do I squash my last 3 commits into one? i think its git rebase -i but i always mess it up", "should_trigger": false},
+  {"query": "write a PR description for my branch feature/PROJ-221-sso, summarize what changed vs main and add a testing section", "should_trigger": false},
+  {"query": "git push got rejected with 'Updates were rejected because the tip of your current branch is behind'. what do i do without losing my work", "should_trigger": false},
+  {"query": "configure semantic-release in our GitHub Actions workflow so merges to main publish to npm automatically", "should_trigger": false},
+  {"query": "undo my last commit but keep the changes staged, i committed to main by accident instead of my feature branch", "should_trigger": false},
+  {"query": "use git bisect to find which commit introduced the bug where dates show in UTC instead of local time on the invoices page", "should_trigger": false},
+  {"query": "write a python script that reads our git log and counts commits per conventional commit type per month, output as csv for a dashboard", "should_trigger": false},
+  {"query": "explain what the 'BREAKING CHANGE' footer means in conventional commits and how it differs from using '!' — just curious, not committing anything", "should_trigger": false}
+]
