@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`ship` is a Claude Code plugin of git workflow skills. There is no build step and no application code: the product is prompt text in `skills/<name>/SKILL.md` (plus optional `references/`), and the manifest is `.claude-plugin/plugin.json`. Today there is one skill, `commit` (invoked as `/ship:commit`), which writes Conventional Commits 1.0.0 messages. More skills (pr, changelog, release, …) are planned, each in its own `skills/<name>/` folder with a matching `evals/<name>/` suite.
+`ship` is a Claude Code plugin for trunk-based development: atomic commits, small PRs and a `main` that is always releasable. There is no build step and no application code: the product is prompt text in `skills/<name>/SKILL.md` (plus optional `references/`), and the manifest is `.claude-plugin/plugin.json`. Today there is one skill, `commit` (invoked as `/ship:commit`), which writes Conventional Commits 1.0.0 messages. More skills (pr, changelog, release, …) are planned, each in its own `skills/<name>/` folder with a matching `evals/<name>/` suite.
 
 ## Layout rules that aren't obvious
 
