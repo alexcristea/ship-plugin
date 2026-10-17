@@ -80,3 +80,7 @@ skills/conventional-commits/
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the repo layout, local development, and how to run the evals.
+
+## License
+
+[MIT](./LICENSE).

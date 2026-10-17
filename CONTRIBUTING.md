@@ -22,7 +22,8 @@ commits-plugin/
 │       └── grade.py                 # grades a finished iteration from its git repos
 ├── conventional-commits-workspace/  # eval run output (gitignored)
 ├── README.md
-└── CONTRIBUTING.md
+├── CONTRIBUTING.md
+└── LICENSE
 ```
 
 The eval suite stays outside `skills/`. Claude can read anything in the skill folder while running the skill, so expected answers placed there could leak into real use.

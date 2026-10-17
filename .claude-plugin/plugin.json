@@ -6,5 +6,6 @@
     "name": "Alex Cristea",
     "email": "alexcristea@me.com"
   },
+  "license": "MIT",
   "keywords": ["git", "commit", "conventional-commits", "commitlint"]
 }
