@@ -128,11 +128,11 @@ A full serial run makes about 40 `claude -p` calls. Run it from a scratch direct
 
 ## Commit messages
 
-This repo uses Conventional Commits, with `commits` as the scope:
+This repo uses Conventional Commits, with `ship` as the scope:
 
 ```
-feat(commits): flag diffs that contradict the user's description
-test(commits): add trigger eval set for the skill description
+feat(ship): flag diffs that contradict the user's description
+test(ship): add trigger eval set for the skill description
 ```
 
 Use the plugin to write them.
