@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Three kinds of non-shipping file, kept apart by cost:** `tests/` is deterministic checks of the eval tooling (no Claude, run on every change); `evals/<skill>/` is eval definitions (runs Claude, run when a skill changes); `.eval-runs/<skill>/` is generated output (gitignored; only the summary in `evals/<skill>/baseline.json` is committed).
 - **Rules go in `SKILL.md`, spec detail in `references/spec.md`.** `SKILL.md` is loaded when the skill triggers; `references/` is read on demand.
 - **Only the frontmatter `description` drives triggering.** Trigger phrases in the body do nothing. Near misses (squash, undo a commit, write a changelog, set up commitlint) must *not* trigger `commit`.
-- **Fixtures must build on macOS and Linux.** Use `sedi <script> <file>` from `evals/shared/common.sh` for in-place edits, never `sed -i`.
+- **Fixtures must build on macOS and Linux** (CI runs both). Use `sedi <script> <file>` from `evals/shared/common.sh` for in-place edits, never `sed -i`.
 - Example commit messages in the skill must pass `@commitlint/config-conventional`.
 - Explain the reason behind a rule instead of writing it in capitals.
 
@@ -37,6 +37,8 @@ bash tests/test_fixtures.sh
 python3 -m unittest discover -s tests
 python3 -m unittest discover -s tests -k <test_name>   # one test
 ```
+
+CI (`.github/workflows/ci.yml`) runs these tests on Ubuntu and macOS plus `claude plugin validate .`; evals are not run in CI.
 
 Build one eval fixture (a throwaway git repo):
 

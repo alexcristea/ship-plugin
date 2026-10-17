@@ -82,6 +82,8 @@ python3 -m unittest discover -s tests
 
 Run one test with `python3 -m unittest discover -s tests -k test_bad_commit_fails_the_matching_checks`.
 
+CI (`.github/workflows/ci.yml`) runs these tests on Ubuntu and macOS, and runs `claude plugin validate .`, on every push to `main` and every pull request. It doesn't run the evals, because they need Claude and cost money.
+
 ### Behavior evals
 
 Each entry in `evals/<skill>/cases.json` names a fixture, a user prompt and its assertions. The fixtures cover:

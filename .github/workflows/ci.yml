@@ -1,0 +1,41 @@
+name: CI
+
+# Deterministic checks only. Evals run Claude and cost money, so they stay a local, manual step.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (${{ matrix.os }})
+    # Fixtures are shell scripts; macOS (BSD tools) and Linux (GNU tools) both have to build them.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fixtures build
+        run: bash tests/test_fixtures.sh
+      - name: Definitions and graders
+        run: python3 -m unittest discover -s tests -v
+
+  validate:
+    name: Validate plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: claude plugin validate
+        run: npx -y @anthropic-ai/claude-code@2.1.302 plugin validate .
