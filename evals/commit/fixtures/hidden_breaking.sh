@@ -1,6 +1,6 @@
 #!/bin/bash
 # "Just a refactor" that renames a public keyword arg and drops a public export.
-source "$(dirname "$0")/../../_shared/common.sh" "$1"
+source "$(dirname "$0")/../../shared/common.sh" "$1"
 mkdir -p billing
 cat > pyproject.toml <<'T'
 [project]

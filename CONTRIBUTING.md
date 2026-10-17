@@ -13,7 +13,7 @@ ship/
 │       ├── SKILL.md
 │       └── references/spec.md
 ├── evals/                           # eval definitions: run Claude, cost money (committed)
-│   ├── _shared/
+│   ├── shared/
 │   │   └── common.sh                # fixture setup shared by every skill
 │   └── commit/
 │       ├── cases.json               # behavior evals: prompt, fixture, assertions
@@ -118,7 +118,7 @@ When a change to the skill is accepted, update `evals/<skill>/baseline.json` wit
 
 #### Adding an eval
 
-1. Write `fixtures/<name>.sh`. Source `../../_shared/common.sh`, create the history and stage the changes.
+1. Write `fixtures/<name>.sh`. Source `../../shared/common.sh`, create the history and stage the changes.
    - If the fixture doesn't start with two commits, record the starting count with `git config fixture.base <n>`.
    - Record anything the grader compares against with `git config fixture.<key>`. Git config keys can't contain underscores, so use names like `fixture.stagedtree`.
 2. Add an entry to `cases.json` with `id`, `name`, `fixture`, `prompt` and `assertions`.

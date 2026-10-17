@@ -63,7 +63,7 @@ python3 -m scripts.run_eval \
 Behavior evals are run through the skill-creator plugin, comparing `with_skill` and `without_skill`. Tell it the case file (`evals/commit/cases.json`) and workspace (`.eval-runs/commit/`) explicitly; its defaults are `evals/evals.json` inside the skill and `<skill>-workspace/`. The pieces are linked by name:
 
 1. `evals/commit/cases.json` — each entry has `id`, `name`, `fixture`, `prompt`, `assertions`.
-2. `evals/commit/fixtures/<fixture>.sh` — sources `evals/_shared/common.sh` (creates the repo, provides `c <day> <msg>` for dated commits), builds history and stages changes. Values the grader needs are stored with `git config fixture.<key>` (no underscores in keys). Fixtures are assumed to start with 2 commits; otherwise set `git config fixture.base <n>`.
+2. `evals/commit/fixtures/<fixture>.sh` — sources `evals/shared/common.sh` (creates the repo, provides `c <day> <msg>` for dated commits), builds history and stages changes. Values the grader needs are stored with `git config fixture.<key>` (no underscores in keys). Fixtures are assumed to start with 2 commits; otherwise set `git config fixture.base <n>`.
 3. Run dirs are `iteration-<N>/eval-<id>-<name>/<config>/run-1/outputs/repo`; the agent writes what it would have asked the user to `outputs/notes.md` and must not push.
 4. `evals/commit/grade.py` — derives the eval name from the directory, runs `common()` checks plus the function registered for that name in `SPECIFIC`, by inspecting git history, tree and remote.
 

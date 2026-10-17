@@ -1,5 +1,5 @@
 #!/bin/bash
-source "$(dirname "$0")/../../_shared/common.sh" "$1"
+source "$(dirname "$0")/../../shared/common.sh" "$1"
 mkdir -p src/cli src/core .husky
 cat > commitlint.config.js <<'J'
 module.exports = {

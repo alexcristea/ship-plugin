@@ -1,6 +1,6 @@
 #!/bin/bash
 # Last two commits have bad messages; the older one is already pushed.
-source "$(dirname "$0")/../../_shared/common.sh" "$1"
+source "$(dirname "$0")/../../shared/common.sh" "$1"
 git init -q --bare "$REPO.remote.git"
 git remote add origin "$REPO.remote.git"
 cat > parse.py <<'P'
