@@ -1,6 +1,6 @@
 # ship
 
-A Claude Code plugin for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. Today it has one skill, `commit`, which writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message.
+A Claude Code plugin for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. It has two skills: `commit` writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message, and `changelog` turns the commits since the last release into `CHANGELOG.md` entries.
 
 You say "commit this". Claude reads the staged diff, checks the repo's commitlint or commitizen config, drafts a `type(scope)!: description` message with a body and footers where they help, shows it to you, and commits on your OK.
 
@@ -9,8 +9,9 @@ You say "commit this". Claude reads the staged diff, checks the repo's commitlin
 | Skill          | Purpose                                                                                       |
 |----------------|-----------------------------------------------------------------------------------------------|
 | `/ship:commit` | Draft a Conventional Commits message for the staged changes, then commit once you approve it. Also handles reverts and rewording existing messages. |
+| `/ship:changelog [version \| major \| minor \| patch]` | Add the changes since the last release to `CHANGELOG.md` under `[Unreleased]`. With a version or bump, also cut a dated release section. |
 
-You rarely need the slash command. The skill triggers on ordinary requests such as "commit this", "write a commit msg", "what should I call this commit?" or "wrap this up in a commit", even when you never mention Conventional Commits.
+You rarely need the slash commands. The skills trigger on ordinary requests such as "commit this", "what should I call this commit?", "update the changelog" or "get the changelog ready for 1.3.0", even when you never mention Conventional Commits.
 
 ## Prerequisites
 
@@ -39,6 +40,10 @@ claude --plugin-dir "$PWD/ship-plugin"
 | "the caching commit is serving stale data, revert it"                     | Reverts the commit and writes a `revert:` message that references the reverted SHA.                |
 | "my last two commit messages are garbage, make them conventional"         | Rewords commits that haven't been pushed. For pushed ones, it explains that rewording needs a force-push and leaves the decision to you. |
 | "is `Fixed stuff.` a valid conventional commit?"                          | Checks the message against the spec and the repo's config, then suggests a corrected one.          |
+| "update the changelog"                                                    | Adds the commits since the last tag to `[Unreleased]`, written for users. Leaves out CI, test and chore commits, never edits released sections, and leaves the file uncommitted for you to review. |
+| "we don't have a changelog, make one"                                     | Creates a Keep a Changelog `CHANGELOG.md` from the whole history. If a changelog already exists, it follows that file's format instead. |
+| `/ship:changelog 1.3.0`                                                   | Moves `[Unreleased]` into a dated `[1.3.0]` section and updates the compare links. If the commits call for a different version (a breaking change in a minor), it tells you. It doesn't tag or bump `package.json`. |
+| "update the changelog" in a repo using release-please or semantic-release | Leaves the file alone and explains which tool writes it, since a hand edit would be overwritten. |
 
 ## What the skill follows
 
@@ -76,6 +81,15 @@ skills/commit/
 ```
 
 `SKILL.md` covers the workflow. Claude reads `references/spec.md` when it needs the exact rules, such as footer syntax or what counts as a breaking change.
+
+```
+skills/changelog/
+├── SKILL.md              # the workflow: check for a changelog tool, find new commits, sort, write, cut a version, report
+└── references/
+    └── format.md         # Keep a Changelog and conventional-changelog layouts, type mapping, SemVer bumps, compare links
+```
+
+`changelog` builds on `commit`: the types, `!` markers and `BREAKING CHANGE:` footers that `commit` writes are what `changelog` sorts on. It also handles history that doesn't follow Conventional Commits, by reading the diff.
 
 ## Contributing
 

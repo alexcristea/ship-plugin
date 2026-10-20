@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`ship` is a Claude Code plugin for trunk-based development: atomic commits, small PRs and a `main` that is always releasable. There is no build step and no application code: the product is prompt text in `skills/<name>/SKILL.md` (plus optional `references/`), and the manifest is `.claude-plugin/plugin.json`. Today there is one skill, `commit` (invoked as `/ship:commit`), which writes Conventional Commits 1.0.0 messages. More skills (pr, changelog, release, …) are planned, each in its own `skills/<name>/` folder with a matching `evals/<name>/` suite.
+`ship` is a Claude Code plugin for trunk-based development: atomic commits, small PRs and a `main` that is always releasable. There is no build step and no application code: the product is prompt text in `skills/<name>/SKILL.md` (plus optional `references/`), and the manifest is `.claude-plugin/plugin.json`. There are two skills: `commit` (`/ship:commit`) writes Conventional Commits 1.0.0 messages, and `changelog` (`/ship:changelog [version|major|minor|patch]`) turns commits since the last tag into `CHANGELOG.md` entries (Keep a Changelog by default; never tags or bumps versions, which is left for a future `release` skill). More skills (pr, release, …) are planned, each in its own `skills/<name>/` folder with a matching `evals/<name>/` suite.
 
 ## Layout rules that aren't obvious
 
@@ -43,13 +43,13 @@ CI (`.github/workflows/ci.yml`) runs these tests on Ubuntu and macOS plus `claud
 Build one eval fixture (a throwaway git repo):
 
 ```sh
-bash evals/commit/fixtures/<fixture>.sh /path/to/scratch/<fixture>/repo
+bash evals/<skill>/fixtures/<fixture>.sh /path/to/scratch/<fixture>/repo
 ```
 
 Grade a finished eval iteration (writes `grading.json` per run and `run.json` with skill SHA and model):
 
 ```sh
-python3 evals/commit/grade.py .eval-runs/commit/iteration-<N> --model <model-id>
+python3 evals/<skill>/grade.py .eval-runs/<skill>/iteration-<N> --model <model-id>
 ```
 
 Trigger eval for the description, run from skill-creator's `skills/skill-creator` directory. Keep `--num-workers 1`: parallel workers write near-identical temp skills to the same commands folder and corrupt results. Run from a scratch dir with its own `.claude/`.
