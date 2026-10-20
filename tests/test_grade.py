@@ -105,5 +105,67 @@ class CommitGrader(unittest.TestCase):
         self.assertIsNone(json.loads((self.iteration / "run.json").read_text())["model"])
 
 
+GOOD_UNRELEASED = """## [Unreleased]
+
+### Added
+
+- JSON export for reports.
+
+### Changed
+
+- CSV export streams rows to the output instead of building the whole file in memory.
+
+### Fixed
+
+- `~` in `output_dir` expands to the home directory.
+"""
+
+
+class ChangelogGrader(unittest.TestCase):
+    """Grades update-since-last-tag runs built from the real fixture, with CHANGELOG.md edited by hand."""
+
+    def setUp(self):
+        self.grade = load_grader("changelog")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.iteration = Path(tmp.name) / "iteration-1"
+
+    def build(self, case):
+        run_dir = self.iteration / f"eval-{case['id']}-{case['name']}" / "with_skill" / "run-1"
+        repo = run_dir / "outputs" / "repo"
+        subprocess.run(["bash", str(EVALS / "changelog" / "fixtures" / case["fixture"]), str(repo)],
+                       check=True, capture_output=True)
+        return run_dir, repo
+
+    def grade_changelog(self, edit):
+        run_dir, repo = self.build(next(c for c in cases("changelog") if c["name"] == "update-since-last-tag"))
+        path = repo / "CHANGELOG.md"
+        path.write_text(edit(path.read_text()))
+        (run_dir / "outputs" / "notes.md").write_text(f"```diff\n{GOOD_UNRELEASED}```\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.grade.main(self.iteration)
+        return json.loads((run_dir / "grading.json").read_text())
+
+    def test_good_changelog_passes_every_check(self):
+        result = self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", GOOD_UNRELEASED))
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_bad_changelog_fails_the_matching_checks(self):
+        result = self.grade_changelog(lambda text: text
+                                      .replace("## [Unreleased]\n", GOOD_UNRELEASED + "- Cache pip downloads in CI.\n")
+                                      .replace("- CSV export for reports.", "- CSV export."))
+        failed = {e["text"] for e in result["expectations"] if not e["passed"]}
+        self.assertEqual(failed, {"Released sections from 1.2.0 down unchanged", "CI-only commit left out"})
+
+    def test_checks_are_the_assertions_listed_in_cases_json(self):
+        for case in cases("changelog"):
+            with self.subTest(case=case["name"]):
+                run_dir, _ = self.build(case)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.grade.main(self.iteration)
+                result = json.loads((run_dir / "grading.json").read_text())
+                self.assertEqual([e["text"] for e in result["expectations"]], case["assertions"])
+
+
 if __name__ == "__main__":
     unittest.main()

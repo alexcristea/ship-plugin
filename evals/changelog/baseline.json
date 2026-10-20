@@ -1,0 +1,19 @@
+{
+  "skill": "changelog",
+  "behavior": {
+    "skill_sha": null,
+    "model": null,
+    "date": null,
+    "evals": 6,
+    "runs_per_configuration": null,
+    "pass_rate": { "with_skill": null, "without_skill": null }
+  },
+  "triggers": {
+    "skill_sha": null,
+    "model": null,
+    "date": null,
+    "passed": null,
+    "total": 20,
+    "note": "Not run yet: record the first with_skill/without_skill iteration and trigger run here."
+  }
+}

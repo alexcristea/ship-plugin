@@ -1,0 +1,22 @@
+[
+  {"query": "update the changelog with everything merged since v2.4.0", "should_trigger": true},
+  {"query": "we never kept a CHANGELOG.md on this repo. can you generate one from the git history? keep a changelog format pls", "should_trigger": true},
+  {"query": "add today's fixes to the Unreleased section of CHANGELOG.md", "should_trigger": true},
+  {"query": "we're cutting 3.1.0 this afternoon, get the changelog ready for the release", "should_trigger": true},
+  {"query": "what changed since the last tag? put it in the changelog so QA can see it", "should_trigger": true},
+  {"query": "our CHANGELOG is way behind, the last entry is 1.8.2 but we've had like 30 commits since. catch it up", "should_trigger": true},
+  {"query": "turn the conventional commits since v0.9.0 into changelog entries, breaking changes first", "should_trigger": true},
+  {"query": "i merged the dark mode PR and the login redirect fix, add them to the changelog", "should_trigger": true},
+  {"query": "does the changelog cover the --output rename? if not add it with migration notes", "should_trigger": true},
+  {"query": "move the unreleased changelog entries into a 2.0.0 section dated today", "should_trigger": true},
+  {"query": "commit this, it's the changelog script fix we talked about", "should_trigger": false},
+  {"query": "what should i call this commit? i only touched CHANGELOG.md to fix a typo", "should_trigger": false},
+  {"query": "tag v1.3.0 and push the tag so the release workflow runs", "should_trigger": false},
+  {"query": "set up release-please in our GitHub Actions so it opens release PRs with a generated changelog", "should_trigger": false},
+  {"query": "configure semantic-release with @semantic-release/changelog and npm publishing", "should_trigger": false},
+  {"query": "write a PR description for my branch, summarize what changed vs main", "should_trigger": false},
+  {"query": "show me git log since v1.2.0, one line per commit, i just want to read it", "should_trigger": false},
+  {"query": "bump the version in package.json to 2.1.0 and update the lockfile", "should_trigger": false},
+  {"query": "explain the difference between keep a changelog and conventional-changelog formats, just curious", "should_trigger": false},
+  {"query": "squash my last 4 commits into one before i open the PR", "should_trigger": false}
+]
