@@ -91,15 +91,21 @@ P
 git add -A; c 6 "ci: cache pip downloads"
 cat > widget/export.py <<'P'
 import csv
+import io
 import json
 
 
-def to_csv(rows, out):
+def to_csv(rows, out=None):
+    """Write rows to out as they are produced; without out, return the CSV text as before."""
+    if out is None:
+        buf = io.StringIO()
+        to_csv(rows, buf)
+        return buf.getvalue().rstrip("\n")
     csv.writer(out, lineterminator="\n").writerows(rows)
 
 
 def to_json(rows):
     return json.dumps(rows)
 P
-git add -A; c 7 "perf(export): stream CSV rows to the output instead of building the file in memory"
+git add -A; c 7 "perf(export): let to_csv stream rows to an output instead of building the file in memory"
 record_state

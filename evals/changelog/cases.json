@@ -43,7 +43,7 @@
       "name": "breaking-footer-only",
       "fixture": "breaking_footer.sh",
       "prompt": "add the recent changes to CHANGELOG.md",
-      "expected_output": "Both breaking changes appear in a breaking-changes callout under [Unreleased]: the refactor marked only by a BREAKING CHANGE footer (environment overrides widget.toml) and the feat! removal of /v1/reports, each with the migration text from its footer. --quiet goes under Added.",
+      "expected_output": "Both breaking changes are marked breaking under [Unreleased], in a callout or inline: the refactor marked only by a BREAKING CHANGE footer (environment overrides widget.toml) and the feat! removal of /v1/reports, each with the migration text from its footer. --quiet goes under Added.",
       "files": [],
       "assertions": [
         "Only CHANGELOG.md was changed",
@@ -51,8 +51,8 @@
         "Reported back to the user (notes.md)",
         "Changelog changes shown for review (notes.md)",
         "Released sections from 1.4.0 down unchanged",
-        "Breaking callout lists the footer-only env-over-file change",
-        "Breaking callout lists the /v1/reports removal",
+        "Footer-only env-over-file change marked as breaking",
+        "/v1/reports removal marked as breaking",
         "Migration notes carried over from the footers",
         "New --quiet flag listed under Added"
       ]

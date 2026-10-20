@@ -59,6 +59,13 @@ def subsection(text, title):
     return rest[:end.start()] if end else rest
 
 
+def breaking_notes(text):
+    """Text marked as breaking: a `### ...breaking...` callout plus any entry flagged BREAKING inline."""
+    entries = re.split(r"^(?=[-*] |#)", text, flags=re.M)  # each bullet with its continuation lines
+    inline = "".join(e for e in entries if not e.startswith("#") and "breaking" in e.lower())
+    return (subsection(text, "breaking") + inline).lower()
+
+
 def released(text, since):
     """Everything from the `## [since]` heading down to the link definitions: history that must not change."""
     m = re.search(rf"^## \[?{re.escape(since)}\b", text, re.M)
@@ -127,13 +134,13 @@ def eval_update(repo):
 
 def eval_breaking(repo):
     unreleased = block(changelog(repo), "Unreleased")
-    brk = subsection(unreleased, "breaking").lower()
+    brk = breaking_notes(unreleased)
     return [
         shown(repo),
         unchanged(repo, "1.4.0"),
-        check("Breaking callout lists the footer-only env-over-file change", "env" in brk,
-              brk.strip()[:200] or "no breaking callout"),
-        check("Breaking callout lists the /v1/reports removal", "/v1/reports" in brk, brk.strip()[:200] or "no breaking callout"),
+        check("Footer-only env-over-file change marked as breaking", "env" in brk,
+              brk.strip()[:200] or "nothing marked breaking"),
+        check("/v1/reports removal marked as breaking", "/v1/reports" in brk, brk.strip()[:200] or "nothing marked breaking"),
         check("Migration notes carried over from the footers",
               "/v2/reports" in brk and re.search(r"unset|remov\w* (the )?(env|variable)", brk), brk.strip()[:200] or "none"),
         check("New --quiet flag listed under Added", "--quiet" in subsection(unreleased, "Added"), "checked"),
