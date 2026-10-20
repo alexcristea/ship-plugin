@@ -101,15 +101,16 @@ def common(repo):
 def eval_new(repo):
     text = changelog(repo)
     unreleased = block(text, "Unreleased")
-    added, fixed = subsection(unreleased, "Added"), subsection(unreleased, "Fixed").lower()
+    added, lower = subsection(unreleased, "Added"), unreleased.lower()
     return [
         shown(repo),
         check("CHANGELOG.md created with an [Unreleased] section", re.search(r"^## \[Unreleased\]", text, re.M),
               text[:200] or "no CHANGELOG.md"),
         check("Features listed under Added (CSV export, widget.toml)", "CSV" in added and "widget.toml" in added,
               added.strip()[:200] or "no Added section"),
-        check("Fixes listed under Fixed, including the non-conventional crash fix", "comma" in fixed and "empty" in fixed,
-              fixed.strip()[:200] or "no Fixed section"),
+        # nothing is released yet, so a fix may be folded into its feature's entry instead of listed under Fixed
+        check("Both fixes recorded, including the non-conventional crash fix",
+              "comma" in lower and re.search(r"empty|crash", lower), unreleased.strip()[:200] or "empty"),
         check("CI, test and chore commits left out",
               not any(s in text.lower() for s in ("python 3.13", "unicode", "dev dependencies")), "checked"),
     ]
@@ -119,14 +120,15 @@ def eval_update(repo):
     text = changelog(repo)
     unreleased = block(text, "Unreleased")
     lower = unreleased.lower()
-    changed = subsection(unreleased, "Changed").lower()
+    # to_csv gained an optional out, so the streaming change reads as Changed or Added
+    changed = (subsection(unreleased, "Changed") + subsection(unreleased, "Added")).lower()
     return [
         shown(repo),
         unchanged(repo, "1.2.0"),
         check("New feature and fix added under Unreleased (JSON export, ~ in output_dir)",
               "json" in lower and ("~" in lower or "tilde" in lower or "home" in lower), unreleased.strip()[:200] or "empty"),
-        check("Performance change listed under Changed", "stream" in changed or "memory" in changed,
-              changed.strip()[:200] or "no Changed section"),
+        check("Performance change listed (Changed or Added)", "stream" in changed or "memory" in changed,
+              changed.strip()[:200] or "no Changed or Added section"),
         check("Already released changes not repeated", "comma" not in lower, "checked"),
         check("CI-only commit left out", "pip" not in text.lower(), "checked"),
     ]
@@ -190,6 +192,45 @@ def eval_release_please(repo):
     ]
 
 
+def tilde_fixed(unreleased):
+    fixed = subsection(unreleased, "Fixed").lower()
+    return check("Fix listed under Fixed (~ in output_dir)", re.search(r"~|tilde|home", fixed),
+                 fixed.strip()[:200] or "no Fixed section")
+
+
+def eval_revert_unreleased(repo):
+    unreleased = block(changelog(repo), "Unreleased")
+    return [
+        shown(repo),
+        unchanged(repo, "1.2.0"),
+        check("Reverted XML export left out", "xml" not in unreleased.lower(), unreleased.strip()[:200] or "empty"),
+        tilde_fixed(unreleased),
+    ]
+
+
+def eval_not_tagged(repo):
+    unreleased = block(changelog(repo), "Unreleased").lower()
+    return [
+        shown(repo),
+        unchanged(repo, "1.3.0"),
+        check("Fix after the untagged 1.3.0 added under Unreleased", re.search(r"~|tilde|home", unreleased),
+              unreleased.strip()[:200] or "empty"),
+        check("JSON export from 1.3.0 not repeated under Unreleased", "json" not in unreleased,
+              unreleased.strip()[:200] or "empty"),
+    ]
+
+
+def eval_duplicate(repo):
+    unreleased = block(changelog(repo), "Unreleased")
+    json_entries = re.findall(r"^\s*[-*] .*json.*$", unreleased, re.M | re.I)
+    return [
+        shown(repo),
+        unchanged(repo, "1.2.0"),
+        check("JSON export listed once", len(json_entries) == 1, json_entries),
+        tilde_fixed(unreleased),
+    ]
+
+
 SPECIFIC = {
     "new-changelog-from-history": eval_new,
     "update-since-last-tag": eval_update,
@@ -197,6 +238,9 @@ SPECIFIC = {
     "cut-version-mismatch": eval_cut,
     "existing-conventional-format": eval_conventional,
     "release-please-managed": eval_release_please,
+    "revert-unreleased": eval_revert_unreleased,
+    "release-not-tagged": eval_not_tagged,
+    "duplicate-in-unreleased": eval_duplicate,
 }
 
 

@@ -120,6 +120,30 @@ GOOD_UNRELEASED = """## [Unreleased]
 - `~` in `output_dir` expands to the home directory.
 """
 
+# new-changelog-from-history, as iteration 2's with_skill runs 2 and 3 wrote it
+NEW_FOLDED = """## [Unreleased]
+
+### Added
+
+- Settings can be loaded from a `widget.toml` file. A file with no `[widget]` table is treated as empty settings instead of crashing.
+- CSV export for reports. Fields that contain commas are quoted.
+"""
+
+NEW_SEPARATE = """## [Unreleased]
+
+### Added
+
+- Settings are loaded from `widget.toml`.
+- CSV export for reports.
+
+### Fixed
+
+- A `widget.toml` without a `[widget]` table no longer crashes on load.
+- CSV export quotes fields that contain commas.
+"""
+
+TILDE_FIX ="\n### Fixed\n\n- `~` in `output_dir` expands to the home directory.\n"
+
 # breaking-footer-only, with the breaking changes marked inline (as the without_skill run did in iteration 1)
 INLINE_BREAKING = """## [Unreleased]
 
@@ -174,7 +198,7 @@ class ChangelogGrader(unittest.TestCase):
     def grade_changelog(self, edit, name="update-since-last-tag"):
         run_dir, repo = self.build(next(c for c in cases("changelog") if c["name"] == name))
         path = repo / "CHANGELOG.md"
-        path.write_text(edit(path.read_text()))
+        path.write_text(edit(path.read_text() if path.exists() else ""))
         (run_dir / "outputs" / "notes.md").write_text(f"```diff\n{path.read_text()}```\n")
         with contextlib.redirect_stdout(io.StringIO()):
             self.grade.main(self.iteration)
@@ -190,6 +214,27 @@ class ChangelogGrader(unittest.TestCase):
                                       .replace("- CSV export for reports.", "- CSV export."))
         failed = {e["text"] for e in result["expectations"] if not e["passed"]}
         self.assertEqual(failed, {"Released sections from 1.2.0 down unchanged", "CI-only commit left out"})
+
+    def test_streaming_change_under_added_counts(self):
+        moved = GOOD_UNRELEASED.replace("### Changed\n\n- CSV export streams", "- CSV export streams")
+        result = self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", moved))
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def grade_new(self, unreleased):
+        return self.grade_changelog(lambda _: "# Changelog\n\n" + unreleased, "new-changelog-from-history")
+
+    def test_fixes_folded_into_unreleased_features_count(self):
+        result = self.grade_new(NEW_FOLDED)
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_crash_fix_described_without_the_word_empty_counts(self):
+        result = self.grade_new(NEW_SEPARATE)
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_missing_fixes_fail(self):
+        result = self.grade_new("## [Unreleased]\n\n### Added\n\n- Settings are loaded from `widget.toml`.\n- CSV export for reports.\n")
+        failed = {e["text"] for e in result["expectations"] if not e["passed"]}
+        self.assertEqual(failed, {"Both fixes recorded, including the non-conventional crash fix"})
 
     def grade_breaking(self, unreleased):
         return self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", unreleased), "breaking-footer-only")
@@ -210,6 +255,23 @@ class ChangelogGrader(unittest.TestCase):
             "/v1/reports removal marked as breaking",
             "Migration notes carried over from the footers",
         })
+
+    # name: (entries a good run adds after "## [Unreleased]\n", entries a bad run adds, checks the bad run fails)
+    HISTORY_TRAPS = {
+        "revert-unreleased": (TILDE_FIX, "\n### Added\n\n- XML export for reports.\n" + TILDE_FIX,
+                              {"Reverted XML export left out"}),
+        "release-not-tagged": (TILDE_FIX, "\n### Added\n\n- JSON export for reports.\n" + TILDE_FIX,
+                               {"JSON export from 1.3.0 not repeated under Unreleased"}),
+        "duplicate-in-unreleased": (TILDE_FIX, "\n### Added\n\n- JSON export.\n" + TILDE_FIX,
+                                    {"JSON export listed once"}),
+    }
+
+    def test_history_traps_pass_good_and_fail_bad_changelogs(self):
+        for name, (good, bad, fails) in self.HISTORY_TRAPS.items():
+            for entries, expected in ((good, set()), (bad, fails)):
+                with self.subTest(case=name, expected=expected):
+                    result = self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", "## [Unreleased]\n" + entries), name)
+                    self.assertEqual({e["text"] for e in result["expectations"] if not e["passed"]}, expected)
 
     def test_checks_are_the_assertions_listed_in_cases_json(self):
         for case in cases("changelog"):

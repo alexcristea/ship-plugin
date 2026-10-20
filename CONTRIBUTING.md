@@ -112,6 +112,9 @@ The `changelog` fixtures cover:
 | `cut-version-mismatch`             | Cuts the requested 1.3.0 with links; flags that a breaking change calls for 2.0.0; no tag |
 | `existing-conventional-format`     | Follows the file's conventional-changelog headings instead of switching to Keep a Changelog |
 | `release-please-managed`           | Leaves a release-please changelog untouched and explains why                     |
+| `revert-unreleased`                | Leaves out a feature added and reverted since the last tag                       |
+| `release-not-tagged`               | Respects a 1.3.0 section that was written but never tagged; adds only what came after |
+| `duplicate-in-unreleased`          | Doesn't repeat an entry already in `[Unreleased]`                                |
 
 The `changelog` grader checks the resulting `CHANGELOG.md` against the copy at `fixture.head`, and every run must change nothing but `CHANGELOG.md` and create no tags. Fixtures call `record_state` from `common.sh` as their last step to save `fixture.head` and `fixture.tags`.
 
