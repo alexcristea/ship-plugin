@@ -1,0 +1,164 @@
+{
+  "skill_name": "changelog",
+  "evals": [
+    {
+      "id": 0,
+      "name": "new-changelog-from-history",
+      "fixture": "new_changelog.sh",
+      "prompt": "we don't have a changelog yet. can you make one from the git history?",
+      "expected_output": "A new Keep a Changelog CHANGELOG.md with an [Unreleased] section: the CSV export and widget.toml features under Added, the comma quoting fix and the non-conventional empty-config crash fix under Fixed or folded into their unreleased feature; CI, test and chore commits left out. Not committed, no tag.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "CHANGELOG.md created with an [Unreleased] section",
+        "Features listed under Added (CSV export, widget.toml)",
+        "Both fixes recorded, including the non-conventional crash fix",
+        "CI, test and chore commits left out"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "update-since-last-tag",
+      "fixture": "update_since_tag.sh",
+      "prompt": "update the changelog with what's landed since the last release",
+      "expected_output": "Adds the JSON export (Added), the ~ expansion fix (Fixed) and the streaming perf change (Changed or Added) under [Unreleased]; leaves the 1.2.0 and 1.1.0 sections byte-identical; omits the CI-only commit; doesn't repeat already released entries.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "Released sections from 1.2.0 down unchanged",
+        "New feature and fix added under Unreleased (JSON export, ~ in output_dir)",
+        "Performance change listed (Changed or Added)",
+        "Already released changes not repeated",
+        "CI-only commit left out"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "breaking-footer-only",
+      "fixture": "breaking_footer.sh",
+      "prompt": "add the recent changes to CHANGELOG.md",
+      "expected_output": "Both breaking changes are marked breaking under [Unreleased], in a callout or inline: the refactor marked only by a BREAKING CHANGE footer (environment overrides widget.toml) and the feat! removal of /v1/reports, each with the migration text from its footer. --quiet goes under Added.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "Released sections from 1.4.0 down unchanged",
+        "Footer-only env-over-file change marked as breaking",
+        "/v1/reports removal marked as breaking",
+        "Migration notes carried over from the footers",
+        "New --quiet flag listed under Added"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "cut-version-mismatch",
+      "fixture": "cut_version.sh",
+      "prompt": "we're shipping 1.3.0 today, get the changelog ready for it",
+      "expected_output": "Writes a dated [1.3.0] section with the JSON export, the --out to --output rename (as breaking) and the ~ fix, keeps an empty [Unreleased] above it and updates the compare links. Points out that the breaking rename means SemVer calls for 2.0.0, but uses 1.3.0 as asked. Doesn't tag or bump package.json.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "Released sections from 1.2.0 down unchanged",
+        "Dated 1.3.0 section added",
+        "Empty [Unreleased] kept above 1.3.0",
+        "Changes moved into 1.3.0 (JSON export, --output rename)",
+        "Compare links updated for 1.3.0",
+        "Flagged that the breaking change calls for 2.0.0 (notes.md)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "existing-conventional-format",
+      "fixture": "conventional_format.sh",
+      "prompt": "can you add the stuff since 1.2.0 to our changelog",
+      "expected_output": "Adds the JSON export under ### Features and the ~ fix under ### Bug Fixes, in the file's existing conventional-changelog style, above the 1.2.0 section. No Keep a Changelog headings.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "Released sections from 1.2.0 down unchanged",
+        "New entries use the file's Features / Bug Fixes headings",
+        "No Keep a Changelog headings introduced"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "release-please-managed",
+      "fixture": "release_please.sh",
+      "prompt": "please update the changelog with the latest changes",
+      "expected_output": "Notices release-please-config.json, explains that release-please writes CHANGELOG.md in its release PR, and leaves the file untouched.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "CHANGELOG.md left to release-please (unchanged)",
+        "Explained that release-please generates the changelog (notes.md)"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "revert-unreleased",
+      "fixture": "revert_unreleased.sh",
+      "prompt": "update the changelog, we're cutting a release soon",
+      "expected_output": "Adds only the ~ expansion fix under Fixed. The XML export was added and reverted after v1.2.0, so it never shipped and neither commit appears.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "Released sections from 1.2.0 down unchanged",
+        "Reverted XML export left out",
+        "Fix listed under Fixed (~ in output_dir)"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "release-not-tagged",
+      "fixture": "release_not_tagged.sh",
+      "prompt": "add what's new to the changelog",
+      "expected_output": "Notices the changelog already has a 1.3.0 section that was never tagged (last tag is v1.2.0). Adds only the later ~ expansion fix under [Unreleased], doesn't repeat the JSON export, and leaves 1.3.0 as written. Doesn't create the missing tag.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "Released sections from 1.3.0 down unchanged",
+        "Fix after the untagged 1.3.0 added under Unreleased",
+        "JSON export from 1.3.0 not repeated under Unreleased"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "duplicate-in-unreleased",
+      "fixture": "duplicate_unreleased.sh",
+      "prompt": "catch the changelog up with main",
+      "expected_output": "[Unreleased] already has the JSON export entry, written with the change. Adds only the ~ expansion fix under Fixed and leaves the JSON export listed once.",
+      "files": [],
+      "assertions": [
+        "Only CHANGELOG.md was changed",
+        "No tag was created",
+        "Reported back to the user (notes.md)",
+        "Changelog changes shown for review (notes.md)",
+        "Released sections from 1.2.0 down unchanged",
+        "JSON export listed once",
+        "Fix listed under Fixed (~ in output_dir)"
+      ]
+    }
+  ]
+}

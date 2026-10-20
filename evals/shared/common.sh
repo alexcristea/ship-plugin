@@ -7,3 +7,5 @@ git config commit.gpgsign false
 c() { GIT_AUTHOR_DATE="2026-01-0$1T10:00:00" GIT_COMMITTER_DATE="2026-01-0$1T10:00:00" git commit -q -m "$2"; }
 # in-place sed for both BSD (macOS) and GNU (Linux) sed: sedi <script> <file>
 sedi() { sed -i.bak "$1" "$2" && rm -f "$2.bak"; }
+# record HEAD and tags once the fixture is built, so the grader can tell what the agent changed
+record_state() { git config fixture.head "$(git rev-parse HEAD)"; git config fixture.tags "$(git tag | tr '\n' ' ')"; }

@@ -105,5 +105,196 @@ class CommitGrader(unittest.TestCase):
         self.assertIsNone(json.loads((self.iteration / "run.json").read_text())["model"])
 
 
+GOOD_UNRELEASED = """## [Unreleased]
+
+### Added
+
+- JSON export for reports.
+
+### Changed
+
+- CSV export streams rows to the output instead of building the whole file in memory.
+
+### Fixed
+
+- `~` in `output_dir` expands to the home directory.
+"""
+
+# new-changelog-from-history, as iteration 2's with_skill runs 2 and 3 wrote it
+NEW_FOLDED = """## [Unreleased]
+
+### Added
+
+- Settings can be loaded from a `widget.toml` file. A file with no `[widget]` table is treated as empty settings instead of crashing.
+- CSV export for reports. Fields that contain commas are quoted.
+"""
+
+NEW_SEPARATE = """## [Unreleased]
+
+### Added
+
+- Settings are loaded from `widget.toml`.
+- CSV export for reports.
+
+### Fixed
+
+- A `widget.toml` without a `[widget]` table no longer crashes on load.
+- CSV export quotes fields that contain commas.
+"""
+
+TILDE_FIX ="\n### Fixed\n\n- `~` in `output_dir` expands to the home directory.\n"
+
+# breaking-footer-only, with the breaking changes marked inline (as the without_skill run did in iteration 1)
+INLINE_BREAKING = """## [Unreleased]
+
+### Added
+
+- `--quiet` CLI flag to suppress progress output.
+
+### Changed
+
+- **BREAKING:** `WIDGET_*` environment variables now override settings in
+  `widget.toml`. Unset the variable to keep the value from `widget.toml`.
+
+### Removed
+
+- **BREAKING:** the deprecated `/v1/reports` endpoint. Call `/v2/reports`,
+  which returns the same fields plus paging.
+
+### Fixed
+
+- The CLI exits with status 1 on unknown flags.
+"""
+
+CALLOUT_BREAKING = """## [Unreleased]
+
+### ⚠ Breaking changes
+
+- `WIDGET_*` environment variables override `widget.toml`. Unset the variable to keep the file value.
+- `/v1/reports` is removed. Call `/v2/reports`, which returns the same fields plus paging.
+
+### Added
+
+- `--quiet` CLI flag to suppress progress output.
+"""
+
+
+class ChangelogGrader(unittest.TestCase):
+    """Grades runs built from the real fixtures, with CHANGELOG.md edited by hand."""
+
+    def setUp(self):
+        self.grade = load_grader("changelog")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.iteration = Path(tmp.name) / "iteration-1"
+
+    def build(self, case):
+        run_dir = self.iteration / f"eval-{case['id']}-{case['name']}" / "with_skill" / "run-1"
+        repo = run_dir / "outputs" / "repo"
+        subprocess.run(["bash", str(EVALS / "changelog" / "fixtures" / case["fixture"]), str(repo)],
+                       check=True, capture_output=True)
+        return run_dir, repo
+
+    def grade_changelog(self, edit, name="update-since-last-tag"):
+        run_dir, repo = self.build(next(c for c in cases("changelog") if c["name"] == name))
+        path = repo / "CHANGELOG.md"
+        path.write_text(edit(path.read_text() if path.exists() else ""))
+        (run_dir / "outputs" / "notes.md").write_text(f"```diff\n{path.read_text()}```\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.grade.main(self.iteration)
+        return json.loads((run_dir / "grading.json").read_text())
+
+    def test_good_changelog_passes_every_check(self):
+        result = self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", GOOD_UNRELEASED))
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_bad_changelog_fails_the_matching_checks(self):
+        result = self.grade_changelog(lambda text: text
+                                      .replace("## [Unreleased]\n", GOOD_UNRELEASED + "- Cache pip downloads in CI.\n")
+                                      .replace("- CSV export for reports.", "- CSV export."))
+        failed = {e["text"] for e in result["expectations"] if not e["passed"]}
+        self.assertEqual(failed, {"Released sections from 1.2.0 down unchanged", "CI-only commit left out"})
+
+    def test_streaming_change_under_added_counts(self):
+        moved = GOOD_UNRELEASED.replace("### Changed\n\n- CSV export streams", "- CSV export streams")
+        result = self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", moved))
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def grade_new(self, unreleased):
+        return self.grade_changelog(lambda _: "# Changelog\n\n" + unreleased, "new-changelog-from-history")
+
+    def test_fixes_folded_into_unreleased_features_count(self):
+        result = self.grade_new(NEW_FOLDED)
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_crash_fix_described_without_the_word_empty_counts(self):
+        result = self.grade_new(NEW_SEPARATE)
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_missing_fixes_fail(self):
+        result = self.grade_new("## [Unreleased]\n\n### Added\n\n- Settings are loaded from `widget.toml`.\n- CSV export for reports.\n")
+        failed = {e["text"] for e in result["expectations"] if not e["passed"]}
+        self.assertEqual(failed, {"Both fixes recorded, including the non-conventional crash fix"})
+
+    def grade_breaking(self, unreleased):
+        return self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", unreleased), "breaking-footer-only")
+
+    def test_inline_breaking_markers_count_as_marked(self):
+        result = self.grade_breaking(INLINE_BREAKING)
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_breaking_changes_callout_counts_as_marked(self):
+        result = self.grade_breaking(CALLOUT_BREAKING)
+        self.assertEqual(result["summary"]["failed"], 0, [e for e in result["expectations"] if not e["passed"]])
+
+    def test_unmarked_breaking_changes_fail_the_breaking_checks(self):
+        result = self.grade_breaking(INLINE_BREAKING.replace("**BREAKING:** ", ""))
+        failed = {e["text"] for e in result["expectations"] if not e["passed"]}
+        self.assertEqual(failed, {
+            "Footer-only env-over-file change marked as breaking",
+            "/v1/reports removal marked as breaking",
+            "Migration notes carried over from the footers",
+        })
+
+    # name: (entries a good run adds after "## [Unreleased]\n", entries a bad run adds, checks the bad run fails)
+    HISTORY_TRAPS = {
+        "revert-unreleased": (TILDE_FIX, "\n### Added\n\n- XML export for reports.\n" + TILDE_FIX,
+                              {"Reverted XML export left out"}),
+        "release-not-tagged": (TILDE_FIX, "\n### Added\n\n- JSON export for reports.\n" + TILDE_FIX,
+                               {"JSON export from 1.3.0 not repeated under Unreleased"}),
+        "duplicate-in-unreleased": (TILDE_FIX, "\n### Added\n\n- JSON export.\n" + TILDE_FIX,
+                                    {"JSON export listed once"}),
+    }
+
+    def test_history_traps_pass_good_and_fail_bad_changelogs(self):
+        for name, (good, bad, fails) in self.HISTORY_TRAPS.items():
+            for entries, expected in ((good, set()), (bad, fails)):
+                with self.subTest(case=name, expected=expected):
+                    result = self.grade_changelog(lambda text: text.replace("## [Unreleased]\n", "## [Unreleased]\n" + entries), name)
+                    self.assertEqual({e["text"] for e in result["expectations"] if not e["passed"]}, expected)
+
+    def test_checks_are_the_assertions_listed_in_cases_json(self):
+        for case in cases("changelog"):
+            with self.subTest(case=case["name"]):
+                run_dir, _ = self.build(case)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.grade.main(self.iteration)
+                result = json.loads((run_dir / "grading.json").read_text())
+                self.assertEqual([e["text"] for e in result["expectations"]], case["assertions"])
+
+
+class ChangelogFixtures(unittest.TestCase):
+    """Fixtures must contain only the breaking changes their eval expects, or the grader rewards the wrong answer."""
+
+    def test_update_since_tag_keeps_to_csv_backward_compatible(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            subprocess.run(["bash", str(EVALS / "changelog" / "fixtures" / "update_since_tag.sh"), str(repo)],
+                           check=True, capture_output=True)
+            out = subprocess.run(["python3", "-c", "from widget.export import to_csv; print(to_csv([['a,b', 1]]))"],
+                                 cwd=repo, capture_output=True, text=True)
+            self.assertEqual(out.stdout.strip(), '"a,b",1', out.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

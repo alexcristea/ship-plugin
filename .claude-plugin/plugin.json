@@ -1,11 +1,11 @@
 {
   "name": "ship",
-  "version": "0.1.0",
-  "description": "Skills for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. commit: write Conventional Commits 1.0.0 messages that respect the repo's commitlint/commitizen config.",
+  "version": "0.2.0",
+  "description": "Skills for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. commit: write Conventional Commits 1.0.0 messages that respect the repo's commitlint/commitizen config. changelog: turn the commits since the last release into CHANGELOG.md entries.",
   "author": {
     "name": "Alex Cristea",
     "email": "alexcristea@me.com"
   },
   "license": "MIT",
-  "keywords": ["trunk-based-development", "git", "commit", "conventional-commits", "commitlint"]
+  "keywords": ["trunk-based-development", "git", "commit", "conventional-commits", "commitlint", "changelog", "keep-a-changelog"]
 }

@@ -1,0 +1,23 @@
+{
+  "skill": "changelog",
+  "behavior": {
+    "skill_sha": "7004c5e",
+    "model": "claude-opus-5-5",
+    "date": "2026-10-20",
+    "evals": 9,
+    "runs_per_configuration": 3,
+    "pass_rate": {
+      "with_skill": 1.0,
+      "without_skill": 0.956
+    },
+    "note": "Only cut-version-mismatch discriminates: without the skill the agent writes 2.0.0 instead of the requested 1.3.0 (3/3 runs). The other 8 evals pass in both configurations."
+  },
+  "triggers": {
+    "skill_sha": "7004c5e",
+    "model": "claude-opus-5-5",
+    "date": "2026-10-20",
+    "passed": 20,
+    "total": 20,
+    "note": "2 runs per query, --num-workers 1."
+  }
+}

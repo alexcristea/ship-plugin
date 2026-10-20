@@ -9,18 +9,22 @@ ship-plugin/
 ├── .claude-plugin/
 │   └── plugin.json                  # plugin manifest
 ├── skills/
-│   └── commit/                      # ships with the plugin; keep it free of test material
+│   ├── commit/                      # ships with the plugin; keep it free of test material
+│   │   ├── SKILL.md
+│   │   └── references/spec.md
+│   └── changelog/
 │       ├── SKILL.md
-│       └── references/spec.md
+│       └── references/format.md
 ├── evals/                           # eval definitions: run Claude, cost money (committed)
 │   ├── shared/
 │   │   └── common.sh                # fixture setup shared by every skill
-│   └── commit/
-│       ├── cases.json               # behavior evals: prompt, fixture, assertions
-│       ├── triggers.json            # 20 queries for checking the description
-│       ├── fixtures/                # one script per eval; each builds a throwaway git repo
-│       ├── grade.py                 # grades a finished iteration from its git repos
-│       └── baseline.json            # last recorded scores, to compare changes against
+│   ├── commit/
+│   │   ├── cases.json               # behavior evals: prompt, fixture, assertions
+│   │   ├── triggers.json            # 20 queries for checking the description
+│   │   ├── fixtures/                # one script per eval; each builds a throwaway git repo
+│   │   ├── grade.py                 # grades a finished iteration from its git repos
+│   │   └── baseline.json            # last recorded scores, to compare changes against
+│   └── changelog/                   # same layout as commit/
 ├── tests/                           # deterministic checks of the eval tooling; no Claude
 │   ├── test_fixtures.sh
 │   └── test_grade.py
@@ -86,7 +90,7 @@ CI (`.github/workflows/ci.yml`) runs these tests on Ubuntu and macOS, and runs `
 
 ### Behavior evals
 
-Each entry in `evals/<skill>/cases.json` names a fixture, a user prompt and its assertions. The fixtures cover:
+Each entry in `evals/<skill>/cases.json` names a fixture, a user prompt and its assertions. The `commit` fixtures cover:
 
 | Eval                               | What it checks                                                                  |
 |------------------------------------|----------------------------------------------------------------------------------|
@@ -97,6 +101,22 @@ Each entry in `evals/<skill>/cases.json` names a fixture, a user prompt and its 
 | `hidden-breaking-in-refactor`      | Catches a breaking change in a "just a refactor" and commits the staged code unmodified |
 | `revert-feature-under-later-fix`   | Reverts one commit and keeps a later fix                                          |
 | `fix-messages-one-pushed`          | Rewords only the unpushed commit; doesn't force-push                              |
+
+The `changelog` fixtures cover:
+
+| Eval                               | What it checks                                                                  |
+|------------------------------------|----------------------------------------------------------------------------------|
+| `new-changelog-from-history`       | Creates a Keep a Changelog file; sorts non-conventional commits; leaves out ci/test/chore |
+| `update-since-last-tag`            | Adds only post-tag changes to `[Unreleased]`; released sections stay byte-identical |
+| `breaking-footer-only`             | Catches a `BREAKING CHANGE:` footer without `!`; carries the migration notes over |
+| `cut-version-mismatch`             | Cuts the requested 1.3.0 with links; flags that a breaking change calls for 2.0.0; no tag |
+| `existing-conventional-format`     | Follows the file's conventional-changelog headings instead of switching to Keep a Changelog |
+| `release-please-managed`           | Leaves a release-please changelog untouched and explains why                     |
+| `revert-unreleased`                | Leaves out a feature added and reverted since the last tag                       |
+| `release-not-tagged`               | Respects a 1.3.0 section that was written but never tagged; adds only what came after |
+| `duplicate-in-unreleased`          | Doesn't repeat an entry already in `[Unreleased]`                                |
+
+The `changelog` grader checks the resulting `CHANGELOG.md` against the copy at `fixture.head`, and every run must change nothing but `CHANGELOG.md` and create no tags. Fixtures call `record_state` from `common.sh` as their last step to save `fixture.head` and `fixture.tags`.
 
 The evals run through the [skill-creator](https://github.com/anthropics/claude-plugins-official) plugin. In Claude Code, ask it to run the next iteration of the `commit` evals from `evals/commit/cases.json`, with `.eval-runs/commit/` as the workspace. Name both paths: by default skill-creator looks for `evals/evals.json` inside the skill and writes to `<skill>-workspace/`. For each eval and each configuration (`with_skill`, `without_skill`), it:
 
