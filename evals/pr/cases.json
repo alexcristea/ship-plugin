@@ -1,0 +1,175 @@
+{
+  "skill_name": "pr",
+  "evals": [
+    {
+      "id": 0,
+      "name": "feature-from-branch",
+      "fixture": "feature_from_branch.sh",
+      "prompt": "open a PR for this branch",
+      "expected_output": "A PR titled feat(export): ... in the default layout (Summary, Changes, Testing), giving the reason from the commit body (Finance's spreadsheet tool imports JSON, not CSV), closing #482 from the branch name, with no breaking-changes section and under 200 words.",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Title type is feat",
+        "Body gives the reason from the commit (finance, spreadsheet)",
+        "Links the issue from the branch (Closes #482)",
+        "Uses the default sections (Summary, Changes, Testing)",
+        "No breaking-changes section when nothing breaks"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "repo-template",
+      "fixture": "repo_template.sh",
+      "prompt": "can you put up a PR for my fix?",
+      "expected_output": "Fills in .github/pull_request_template.md instead of the default layout: keeps Description, Type of change, How has this been tested? and Checklist, and ticks Bug fix. Title fix(config): ...",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Title type is fix",
+        "Body keeps the template's headings",
+        "Bug fix box ticked"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "hidden-breaking-cleanup",
+      "fixture": "hidden_breaking.sh",
+      "prompt": "open a PR for this, it's just a small cleanup of the cli flags",
+      "expected_output": "Notices that the 'refactor' renames the public --out flag to --output. Title carries ! and the body has a breaking-changes note telling users to switch to --output. Tells the user it isn't just a cleanup.",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Title marks the breaking change with !",
+        "Body explains the break and the migration (--out to --output)",
+        "Told the user it's a breaking change, not just a cleanup (notes.md)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "stale-local-main",
+      "fixture": "stale_main.sh",
+      "prompt": "write up a PR for my branch and open it",
+      "expected_output": "Diffs against origin/main (where the branch starts), not the stale local main, so the teammate's SSO commit stays out. Describes only the ~ expansion fix; title fix(config): ...",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Title type is fix",
+        "Describes the ~ expansion fix",
+        "Teammate's SSO commit on origin/main not described"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "commitlint-title",
+      "fixture": "commitlint_title.sh",
+      "prompt": "make a PR for this",
+      "expected_output": "Commits are 'wip', 'add yaml support', 'fix tests'. Writes a squash-ready title from the diff that passes the repo's commitlint config: feat, a scope from scope-enum (config) or none, at most 72 characters.",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Title type is feat",
+        "Title scope is in commitlint's scope-enum (or omitted)",
+        "Title at most 72 characters (header-max-length)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "existing-pr-update",
+      "fixture": "existing_pr.sh",
+      "prompt": "I added retries to the upload, update the PR description",
+      "expected_output": "Finds open PR #57 and updates it with gh pr edit rather than opening a new one. Pushes the two retry commits (or says they aren't pushed). The new body describes the whole PR: the S3 upload and the retries.",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "Existing PR #57 updated with gh pr edit, no new PR",
+        "Body covers the new retries",
+        "Body still covers the S3 upload",
+        "Retry commits pushed, or flagged as unpushed (notes.md)"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "uncommitted-work",
+      "fixture": "uncommitted.sh",
+      "prompt": "open a PR for the tsv export",
+      "expected_output": "Notices the --format tsv wiring in cli.py is uncommitted and tells the user it won't be in the PR. The body doesn't describe the CLI flag unless that change was committed and pushed.",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Flagged the uncommitted cli.py change (notes.md)",
+        "Body describes only what's pushed"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "mixed-concerns",
+      "fixture": "mixed_concerns.sh",
+      "prompt": "open a PR for the json export",
+      "expected_output": "Notices the branch also carries an unrelated ~ expansion fix in config.py and suggests moving it to its own PR. The PR title is feat(export): ...",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Title type is feat",
+        "Suggested splitting the unrelated change (notes.md)"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "misleading-subjects",
+      "fixture": "misleading_subjects.sh",
+      "prompt": "put up a PR for my tidy-export branch",
+      "expected_output": "The commits say style/chore, but the diff fixes load_rows dropping the last row of a report without a trailing newline. Title is fix(...): ... and the body names the bug.",
+      "files": [],
+      "assertions": [
+        "Reported back to the user (notes.md)",
+        "main on origin untouched",
+        "No force-push or rewritten commits on the branch",
+        "Title is a Conventional Commits header",
+        "Body is concise (at most 200 words)",
+        "PR opened with gh pr create against main",
+        "Title type is fix",
+        "Body describes the dropped-last-row bug"
+      ]
+    }
+  ]
+}
