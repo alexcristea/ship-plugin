@@ -12,19 +12,23 @@ ship-plugin/
 │   ├── commit/                      # ships with the plugin; keep it free of test material
 │   │   ├── SKILL.md
 │   │   └── references/spec.md
-│   └── changelog/
-│       ├── SKILL.md
-│       └── references/format.md
+│   ├── changelog/
+│   │   ├── SKILL.md
+│   │   └── references/format.md
+│   └── pr/
+│       └── SKILL.md
 ├── evals/                           # eval definitions: run Claude, cost money (committed)
 │   ├── shared/
-│   │   └── common.sh                # fixture setup shared by every skill
+│   │   ├── common.sh                # fixture setup shared by every skill
+│   │   └── fake_gh.py               # offline stand-in for the GitHub CLI
 │   ├── commit/
 │   │   ├── cases.json               # behavior evals: prompt, fixture, assertions
 │   │   ├── triggers.json            # 20 queries for checking the description
 │   │   ├── fixtures/                # one script per eval; each builds a throwaway git repo
 │   │   ├── grade.py                 # grades a finished iteration from its git repos
 │   │   └── baseline.json            # last recorded scores, to compare changes against
-│   └── changelog/                   # same layout as commit/
+│   ├── changelog/                   # same layout as commit/
+│   └── pr/                          # same layout, plus base.sh shared by its fixtures
 ├── tests/                           # deterministic checks of the eval tooling; no Claude
 │   ├── test_fixtures.sh
 │   └── test_grade.py
@@ -115,6 +119,22 @@ The `changelog` fixtures cover:
 | `revert-unreleased`                | Leaves out a feature added and reverted since the last tag                       |
 | `release-not-tagged`               | Respects a 1.3.0 section that was written but never tagged; adds only what came after |
 | `duplicate-in-unreleased`          | Doesn't repeat an entry already in `[Unreleased]`                                |
+
+The `pr` fixtures cover:
+
+| Eval                               | What it checks                                                                  |
+|------------------------------------|----------------------------------------------------------------------------------|
+| `feature-from-branch`              | Default layout; reason taken from the commit body; `Closes #482` from the branch name; concise |
+| `repo-template`                    | Fills in `.github/pull_request_template.md` and ticks Bug fix                     |
+| `hidden-breaking-cleanup`          | Catches a renamed flag in a "just a cleanup"; `!` in the title and a migration note |
+| `stale-local-main`                 | Diffs against `origin/main`, so a teammate's commit isn't described as part of the PR |
+| `commitlint-title`                 | Writes a title from "wip" commits that passes `scope-enum` and `header-max-length` |
+| `existing-pr-update`               | Updates the open PR with `gh pr edit`, covering the whole PR, not just the new commits |
+| `uncommitted-work`                 | Flags uncommitted CLI wiring and doesn't describe it in the PR                   |
+| `mixed-concerns`                   | Suggests moving an unrelated fix on the branch into its own PR                   |
+| `misleading-subjects`              | Titles a bug fix `fix` even though its commits say `style` and `chore`          |
+
+Every `pr` run is also checked for a Conventional Commits title, a body of at most 200 words, an untouched `main` on origin and no force-push or rewritten commits. The fixtures give each run a local bare repo as `origin` (by its path, so nothing looks like a real GitHub push to auto mode) and a fake `gh` at `outputs/bin/gh` that records `gh pr create` and `gh pr edit` in `outputs/gh/`. Tell the run agent plainly that `origin` and `gh` are offline stand-ins, and to put `outputs/bin` first on `PATH`. `pr` changes are compared against `old_skill` (the previous `SKILL.md`, snapshotted into `.eval-runs/pr/skill-snapshot/`) as well as `without_skill`.
 
 The `changelog` grader checks the resulting `CHANGELOG.md` against the copy at `fixture.head`, and every run must change nothing but `CHANGELOG.md` and create no tags. Fixtures call `record_state` from `common.sh` as their last step to save `fixture.head` and `fixture.tags`.
 

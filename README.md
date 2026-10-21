@@ -1,6 +1,6 @@
 # ship
 
-A Claude Code plugin for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. It has two skills: `commit` writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message, and `changelog` turns the commits since the last release into `CHANGELOG.md` entries.
+A Claude Code plugin for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. It has three skills: `commit` writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message, `changelog` turns the commits since the last release into `CHANGELOG.md` entries, and `pr` writes a short pull request description and opens the PR once you approve it.
 
 You say "commit this". Claude reads the staged diff, checks the repo's commitlint or commitizen config, drafts a `type(scope)!: description` message with a body and footers where they help, shows it to you, and commits on your OK.
 
@@ -10,8 +10,9 @@ You say "commit this". Claude reads the staged diff, checks the repo's commitlin
 |----------------|-----------------------------------------------------------------------------------------------|
 | `/ship:commit` | Draft a Conventional Commits message for the staged changes, then commit once you approve it. Also handles reverts and rewording existing messages. |
 | `/ship:changelog [version \| major \| minor \| patch]` | Add the changes since the last release to `CHANGELOG.md` under `[Unreleased]`. With a version or bump, also cut a dated release section. |
+| `/ship:pr` | Write a concise PR title and description for the branch, then open the PR with `gh` once you approve, or update the open one. |
 
-You rarely need the slash commands. The skills trigger on ordinary requests such as "commit this", "what should I call this commit?", "update the changelog" or "get the changelog ready for 1.3.0", even when you never mention Conventional Commits.
+You rarely need the slash commands. The skills trigger on ordinary requests such as "commit this", "what should I call this commit?", "update the changelog", "get the changelog ready for 1.3.0" or "open a PR", even when you never mention Conventional Commits.
 
 ## Prerequisites
 
@@ -44,6 +45,10 @@ claude --plugin-dir "$PWD/ship-plugin"
 | "we don't have a changelog, make one"                                     | Creates a Keep a Changelog `CHANGELOG.md` from the whole history. If a changelog already exists, it follows that file's format instead. |
 | `/ship:changelog 1.3.0`                                                   | Moves `[Unreleased]` into a dated `[1.3.0]` section and updates the compare links. If the commits call for a different version (a breaking change in a minor), it tells you. It doesn't tag or bump `package.json`. |
 | "update the changelog" in a repo using release-please or semantic-release | Leaves the file alone and explains which tool writes it, since a hand edit would be overwritten. |
+| "open a PR for this branch"                                               | Diffs the branch against `origin/main`, writes a Conventional Commits title and a short Summary / Changes / Testing body, and opens the PR with `gh` once you approve. Adds `Closes #482` when the branch name points to an issue. |
+| "put up a PR" in a repo with `.github/pull_request_template.md`           | Fills in your template instead of the default layout.                                              |
+| "open a PR, it's just a cleanup"                                          | If the diff renames a flag or drops an export, it marks the title with `!`, adds a breaking-changes note with the migration, and tells you. |
+| "I pushed more commits, update the PR description"                        | Finds the open PR and rewrites its description with `gh pr edit` instead of opening a second PR.   |
 
 ## What the skill follows
 
@@ -60,6 +65,10 @@ It applies the rules that shape a message: `type-enum`, `scope-enum`, `scope-emp
 **Breaking changes are always marked**, with both `!` in the header and a `BREAKING CHANGE:` footer that explains how to migrate. A missing marker means semantic-release or a changelog tool ships the change as a minor or patch release.
 
 **It stays local.** The skill never pushes, never passes `--no-verify`, and never amends a commit that has already been pushed. If a commit-msg hook rejects the message, it fixes the message and tries again.
+
+**PR titles are commit messages.** With squash merges the PR title becomes the commit on `main`, so `pr` writes it as a Conventional Commits header that passes the repo's commitlint config, and `changelog` can read it later.
+
+**PR descriptions are short.** A reviewer should read one in under a minute: why the change is needed, what could break, what to check. Sections that would be empty are left out.
 
 ## Example
 
@@ -87,6 +96,11 @@ skills/changelog/
 ├── SKILL.md              # the workflow: check for a changelog tool, find new commits, sort, write, cut a version, report
 └── references/
     └── format.md         # Keep a Changelog and conventional-changelog layouts, type mapping, SemVer bumps, compare links
+```
+
+```
+skills/pr/
+└── SKILL.md              # the workflow: find the base, check the template and commitlint, write title and body, confirm, push, open
 ```
 
 `changelog` builds on `commit`: the types, `!` markers and `BREAKING CHANGE:` footers that `commit` writes are what `changelog` sorts on. It also handles history that doesn't follow Conventional Commits, by reading the diff.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`ship` is a Claude Code plugin for trunk-based development: atomic commits, small PRs and a `main` that is always releasable. There is no build step and no application code: the product is prompt text in `skills/<name>/SKILL.md` (plus optional `references/`), and the manifest is `.claude-plugin/plugin.json`. There are two skills: `commit` (`/ship:commit`) writes Conventional Commits 1.0.0 messages, and `changelog` (`/ship:changelog [version|major|minor|patch]`) turns commits since the last tag into `CHANGELOG.md` entries (Keep a Changelog by default; never tags or bumps versions, which is left for a future `release` skill). More skills (pr, release, …) are planned, each in its own `skills/<name>/` folder with a matching `evals/<name>/` suite.
+`ship` is a Claude Code plugin for trunk-based development: atomic commits, small PRs and a `main` that is always releasable. There is no build step and no application code: the product is prompt text in `skills/<name>/SKILL.md` (plus optional `references/`), and the manifest is `.claude-plugin/plugin.json`. There are three skills: `commit` (`/ship:commit`) writes Conventional Commits 1.0.0 messages, `pr` (`/ship:pr`) writes a concise PR title and description and opens or updates the PR with `gh` after approval, and `changelog` (`/ship:changelog [version|major|minor|patch]`) turns commits since the last tag into `CHANGELOG.md` entries (Keep a Changelog by default; never tags or bumps versions, which is left for a future `release` skill). More skills (release, …) are planned, each in its own `skills/<name>/` folder with a matching `evals/<name>/` suite.
 
 ## Layout rules that aren't obvious
 
@@ -69,6 +69,8 @@ Behavior evals are run through the skill-creator plugin, comparing `with_skill` 
 2. `evals/commit/fixtures/<fixture>.sh` — sources `evals/shared/common.sh` (creates the repo, provides `c <day> <msg>` for dated commits), builds history and stages changes. Values the grader needs are stored with `git config fixture.<key>` (no underscores in keys). Fixtures are assumed to start with 2 commits; otherwise set `git config fixture.base <n>`.
 3. Run dirs are `iteration-<N>/eval-<id>-<name>/<config>/run-1/outputs/repo`; the agent writes what it would have asked the user to `outputs/notes.md` and must not push.
 4. `evals/commit/grade.py` — derives the eval name from the directory, runs `common()` checks plus the function registered for that name in `SPECIFIC`, by inspecting git history, tree and remote.
+
+`pr` fixtures source `evals/pr/base.sh`, which adds a local bare repo as `origin` (by path, never a GitHub-looking URL, or auto mode blocks the push) and a fake `gh` (`evals/shared/fake_gh.py`) at `outputs/bin/gh` that records PR calls in `outputs/gh/`; run agents are told both are offline stand-ins and must put `outputs/bin` first on `PATH`.
 
 Adding an eval means touching all three: fixture script, `cases.json` entry, and an `eval_<name>()` function registered in `SPECIFIC`. `tests/` fails if any link is missing, and checks (for `bugfix-no-config` so far) that a case's `assertions` match the grader's check texts exactly. When a skill change is accepted, update `baseline.json`. A useful eval is one the without-skill run sometimes fails.
 
