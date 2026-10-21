@@ -119,4 +119,4 @@ Show the user the change as a diff in a fenced code block (`git diff CHANGELOG.m
 - commits you weren't sure how to classify
 - a version mismatch, if there is one
 
-Leave the file uncommitted so the user can edit the wording first. Offer to commit it with `docs(changelog): add unreleased changes`, or `chore(release): x.y.z` for a cut version, and follow the repo's commit conventions if they ask. Never push or tag.
+Leave the file uncommitted so the user can edit the wording first. Offer to commit it with `docs(changelog): add unreleased changes`, or `chore(release): x.y.z` for a cut version, and follow the repo's commit conventions if they ask. Keep the commit message agent-agnostic, with no session links or AI co-author trailers, as `/ship:commit` does. Never push or tag.

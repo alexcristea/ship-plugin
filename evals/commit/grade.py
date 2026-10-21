@@ -13,6 +13,9 @@ from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.name  # evals/<skill>/grade.py
 ROOT = Path(__file__).resolve().parents[2]
+# agent attribution: session links, Claude-Session trailers, Co-Authored-By an AI, "Generated with Claude"
+ATTRIBUTION = re.compile(r"claude\.ai/code|^Claude-Session:|^Co-Authored-By:.*(claude|anthropic)|Generated with \[?Claude",
+                         re.I | re.M)
 DEFAULT_BASE = 2  # fixtures start with two commits unless they set fixture.base
 HEADER_RE = re.compile(r"^(?P<type>[a-z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>\S.*)$")
 ANGULAR = {"feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"}
@@ -49,6 +52,8 @@ def common(commits, run_dir):
         check("Descriptions start lowercase and have no trailing period",
               commits and all(p and p["desc"][0].islower() and not p["desc"].endswith(".") for p in parsed),
               "; ".join(headers) or "none"),
+        check("Commit messages carry no agent attribution", not any(ATTRIBUTION.search(m) for m, _ in commits),
+              [h for (m, _), h in zip(commits, headers) if ATTRIBUTION.search(m)] or "none"),
         check("Proposed message was shown for approval before committing (notes.md)",
               notes.exists() and "```" in notes.read_text(), "notes.md present" if notes.exists() else "no notes.md"),
     ]

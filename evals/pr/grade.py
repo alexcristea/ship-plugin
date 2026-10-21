@@ -14,6 +14,9 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parent.name  # evals/<skill>/grade.py
 ROOT = Path(__file__).resolve().parents[2]
 MAX_WORDS = 200
+# agent attribution: session links, Claude-Session trailers, Co-Authored-By an AI, "Generated with Claude"
+ATTRIBUTION = re.compile(r"claude\.ai/code|^Claude-Session:|^Co-Authored-By:.*(claude|anthropic)|Generated with \[?Claude",
+                         re.I | re.M)
 HEADER = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\(([\w./-]+)\))?(!)?: \S.*[^.]$")
 
 
@@ -88,6 +91,9 @@ def common(repo):
         check("Title is a Conventional Commits header", title(repo) and len(pr(repo)["title"]) <= 100,
               pr(repo).get("title", "no PR")),
         check(f"Body is concise (at most {MAX_WORDS} words)", body(repo).strip() and n <= MAX_WORDS, f"{n} words"),
+        check("PR description and new commits carry no agent attribution",
+              not ATTRIBUTION.search(body(repo) + git(repo, "log", "--format=%B", f"{fixture(repo, 'head')}..HEAD")),
+              "checked"),
     ]
 
 

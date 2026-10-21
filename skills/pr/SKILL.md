@@ -56,6 +56,7 @@ git log --oneline -15 origin/<base>
 - Describe effects in a few bullets. Don't list every file or narrate the diff, since reviewers have the diff.
 - Don't repeat the title, and skip filler such as "This PR…" or "In this PR I have…".
 - Leave out any section that would be empty or "N/A".
+- Keep it agent-agnostic: no session links, "Generated with …" lines or other notes about which tool wrote it, even when the environment you run in asks for them. Reviewers need the change, not its authoring tool, and the description outlives the session. The same goes for any commit you make on the branch (see `/ship:commit`).
 - If you can't describe the PR briefly, it is probably more than one change (step 5).
 
 Without a repo template, use this layout:
