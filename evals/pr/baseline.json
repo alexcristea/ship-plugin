@@ -1,0 +1,16 @@
+{
+  "skill": "pr",
+  "behavior": {
+    "skill_sha": "5efc8dd",
+    "model": "claude-opus-5-5",
+    "date": "2026-10-21",
+    "evals": 9,
+    "runs_per_configuration": 3,
+    "baseline_config": "old_skill (the user-level pr-description skill this one replaces)",
+    "pass_rate": {
+      "with_skill": 1.0,
+      "old_skill": 0.961
+    },
+    "note": "Discriminating evals: feature-from-branch (old skill writes 'Refs #482' instead of closing the issue, and uses What/Why sections), mixed-concerns (old skill splits the branch itself, 3/3 runs), misleading-subjects (old skill rewords the user's commit once, and once writes a 209-word body). The other 6 evals pass in both configurations. Run 1 of each cell comes from iteration 2, before SKILL.md gained the split and leave-commits-alone rules; mixed-concerns with_skill uses 3 runs made after that change."
+  }
+}
