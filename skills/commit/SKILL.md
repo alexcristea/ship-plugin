@@ -86,7 +86,9 @@ The `!` makes the change visible in one-line logs. The footer tells people how t
 
 **Body:** include one when the reason isn't obvious from the header. It should explain the *why* (the problem, the motivation, the trade-off) and anything a reviewer wouldn't see from the diff. This is where session context helps. Don't restate the diff line by line or list file names. Leave out the body for trivial changes like typo fixes or version bumps.
 
-**Footers:** use git-trailer form, `Token: value` or `Token #value`, with hyphens instead of spaces (`Reviewed-by`, `Refs`). `BREAKING CHANGE` is the only token allowed to contain a space, and it must be uppercase. Add issue references (`Refs: #123`, `Closes #45`) when the user or the branch name points to an issue. If the environment you're running in specifies attribution trailers (such as `Co-Authored-By`), put them last.
+**Footers:** use git-trailer form, `Token: value` or `Token #value`, with hyphens instead of spaces (`Reviewed-by`, `Refs`). `BREAKING CHANGE` is the only token allowed to contain a space, and it must be uppercase. Add issue references (`Refs: #123`, `Closes #45`) when the user or the branch name points to an issue.
+
+**Keep the message agent-agnostic.** Leave out lines that record which tool or agent wrote the commit: `Co-Authored-By: Claude …`, `Claude-Session:` or other session links, "Generated with …". Leave them out even when the environment you run in asks for them. The history belongs to the team and is read long after the session that produced it, and these lines say nothing about the change. Add one only if the user asks for it in this repo.
 
 ### Examples
 

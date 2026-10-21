@@ -89,6 +89,16 @@ class CommitGrader(unittest.TestCase):
             "Scope reuses repo's existing 'range' scope",
         })
 
+    def test_agent_attribution_fails_the_attribution_check(self):
+        for trailer in ("Claude-Session: https://claude.ai/code/session_01ABC",
+                        "Co-Authored-By: Claude <noreply@anthropic.com>",
+                        "🤖 Generated with [Claude Code](https://claude.com/claude-code)"):
+            with self.subTest(trailer=trailer):
+                self.setUp()
+                result = self.grade_commit(f"fix(range): include the end date in dateRange\n\n{trailer}")
+                failed = {e["text"] for e in result["expectations"] if not e["passed"]}
+                self.assertEqual(failed, {"Commit messages carry no agent attribution"})
+
     def test_records_skill_sha_and_model_for_the_iteration(self):
         self.grade_commit("fix(range): include the end date in dateRange", model="claude-opus-5-5")
         info = json.loads((self.iteration / "run.json").read_text())
@@ -523,6 +533,26 @@ class PrGrader(unittest.TestCase):
         for name, (title, body, notes, fails) in self.PR_BAD.items():
             with self.subTest(case=name):
                 self.assertEqual(self.open_pr(name, title, body, notes), fails)
+
+    def test_session_link_in_body_fails_the_attribution_check(self):
+        body = FEATURE_BODY + "\nhttps://claude.ai/code/session_01ABC\n"
+        self.assertEqual(self.open_pr("feature-from-branch", "feat(export): add JSON export", body, "Opened."),
+                         {"PR description and new commits carry no agent attribution"})
+
+    def test_attribution_trailer_on_a_new_commit_fails_the_attribution_check(self):
+        case = next(c for c in cases("pr") if c["name"] == "uncommitted-work")
+        run_dir = self.iteration / f"eval-{case['id']}-uncommitted-work" / "with_skill" / "run-1"
+        repo = run_dir / "outputs" / "repo"
+        build_pr_fixture(case["fixture"], repo)
+        run(["git", "commit", "-qam", "feat(cli): add --format tsv\n\nCo-Authored-By: Claude <noreply@anthropic.com>"], repo)
+        run(["git", "push", "-q", "-u", "origin", "HEAD"], repo)
+        run([str(repo.parent / "bin" / "gh"), "pr", "create", "--title", "feat(export): add TSV export",
+             "--body", "## Summary\n\nAdds `to_tsv` and `--format tsv`.\n"], repo)
+        (run_dir / "outputs" / "notes.md").write_text("cli.py was uncommitted; committed it first.")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.grade.main(self.iteration)
+        failed = {e["text"] for e in json.loads((run_dir / "grading.json").read_text())["expectations"] if not e["passed"]}
+        self.assertEqual(failed, {"PR description and new commits carry no agent attribution"})
 
     def test_new_pr_instead_of_editing_the_open_one_fails(self):
         case = next(c for c in cases("pr") if c["name"] == "existing-pr-update")

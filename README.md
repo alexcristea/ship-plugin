@@ -64,6 +64,8 @@ It applies the rules that shape a message: `type-enum`, `scope-enum`, `scope-emp
 
 **Breaking changes are always marked**, with both `!` in the header and a `BREAKING CHANGE:` footer that explains how to migrate. A missing marker means semantic-release or a changelog tool ships the change as a minor or patch release.
 
+**Commits and PRs are agent-agnostic.** The skills leave out `Co-Authored-By: Claude`, session links and "Generated with …" lines, even when the environment asks for them. The history describes the change, not the tool that wrote it.
+
 **It stays local.** The skill never pushes, never passes `--no-verify`, and never amends a commit that has already been pushed. If a commit-msg hook rejects the message, it fixes the message and tries again.
 
 **PR titles are commit messages.** With squash merges the PR title becomes the commit on `main`, so `pr` writes it as a Conventional Commits header that passes the repo's commitlint config, and `changelog` can read it later.
