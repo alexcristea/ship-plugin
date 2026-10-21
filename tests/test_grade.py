@@ -296,5 +296,284 @@ class ChangelogFixtures(unittest.TestCase):
             self.assertEqual(out.stdout.strip(), '"a,b",1', out.stderr)
 
 
+
+
+class PrFixtures(unittest.TestCase):
+    """PR fixtures must hold the trap their eval is about, and stay offline."""
+
+    def build(self, fixture):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        repo = Path(tmp.name) / "outputs" / "repo"
+        build_pr_fixture(fixture, repo)
+        return repo
+
+    def test_origin_is_a_visibly_local_repo(self):
+        for fixture in sorted(p.name for p in (EVALS / "pr" / "fixtures").glob("*.sh")):
+            with self.subTest(fixture=fixture):
+                repo = self.build(fixture)
+                url = run(["git", "remote", "get-url", "origin"], repo).stdout.strip()
+                self.assertEqual(Path(url), repo.parent / "origin.git")
+                self.assertEqual(run(["git", "config", "--get-regexp", "^url\\."], repo).stdout, "")
+
+    def test_hidden_breaking_rejects_the_old_flag(self):
+        repo = self.build("hidden_breaking.sh")
+        (repo / "r.tsv").write_text("a\t1\n")
+        out = run(["python3", "-c", "from widget.cli import main; main(['export', 'r.tsv', '--out', 'x.csv'])"], repo)
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("unrecognized arguments: --out", out.stderr)
+
+
+def run(cmd, cwd, **kwargs):
+    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, **kwargs)
+
+
+def build_pr_fixture(fixture, repo):
+    subprocess.run(["bash", str(EVALS / "pr" / "fixtures" / fixture), str(repo)], check=True, capture_output=True)
+
+
+class FakeGh(unittest.TestCase):
+    """The stand-in gh must fail where the real one fails, or evals reward runs that would break on GitHub."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.repo = Path(tmp.name) / "outputs" / "repo"
+        build_pr_fixture("feature_from_branch.sh", self.repo)
+        self.gh = str(self.repo.parent / "bin" / "gh")
+
+    def test_view_without_a_pr_fails_like_gh(self):
+        out = run([self.gh, "pr", "view", "--json", "body"], self.repo)
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("no pull requests found", out.stderr)
+
+    def test_create_refuses_an_unpushed_branch(self):
+        out = run([self.gh, "pr", "create", "--title", "feat: x", "--body", "b"], self.repo)
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("push the current branch", out.stderr)
+
+    def test_create_then_edit_records_both_calls(self):
+        run(["git", "push", "-q", "-u", "origin", "HEAD"], self.repo)
+        created = run([self.gh, "pr", "create", "--title", "feat: x", "--body-file", "-"], self.repo, input="first")
+        self.assertEqual(created.returncode, 0, created.stderr)
+        run([self.gh, "pr", "edit", "--body", "second"], self.repo)
+        out = run([self.gh, "pr", "view", "--json", "title,body", "--jq", ".body"], self.repo)
+        self.assertEqual(out.stdout.strip(), "second")
+        calls = (self.repo.parent / "gh" / "calls.jsonl").read_text().splitlines()
+        self.assertEqual([json.loads(c)["cmd"] for c in calls], ["create", "edit"])
+
+    def test_create_refuses_a_second_pr_for_the_branch(self):
+        run(["git", "push", "-q", "-u", "origin", "HEAD"], self.repo)
+        run([self.gh, "pr", "create", "--title", "feat: x", "--body", "b"], self.repo)
+        out = run([self.gh, "pr", "create", "--title", "feat: y", "--body", "b"], self.repo)
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn("already exists", out.stderr)
+
+    def test_repo_view_reports_main_as_default_branch(self):
+        out = run([self.gh, "repo", "view", "--json", "defaultBranchRef", "-q", ".defaultBranchRef.name"], self.repo)
+        self.assertEqual(out.stdout.strip(), "main")
+
+
+FEATURE_BODY = """## Summary
+
+Finance reconciles reports in a spreadsheet tool that imports JSON but not CSV. This adds `widget export --format json`.
+
+## Changes
+
+- `--format json` writes the report as JSON. CSV stays the default.
+- README documents `--format json`.
+
+## Testing
+
+- [x] `python -m unittest`
+
+Closes #482
+"""
+
+TEMPLATE_BODY = """## Description
+
+`load()` raised `KeyError` on a `widget.toml` without a `[widget]` table. It now returns empty settings.
+
+## Type of change
+
+- [x] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+
+## How has this been tested?
+
+`python -m unittest`
+
+## Checklist
+
+- [x] Tests added or updated
+- [ ] README updated if behavior changed
+"""
+
+BREAKING_BODY = """## Summary
+
+Moves export parsing into `build_parser()` and renames `--out` to `--output`.
+
+## ⚠ Breaking changes
+
+- `--out` is no longer accepted. Use `--output` in scripts that call `widget export`.
+
+## Testing
+
+- [ ] `widget export r.tsv --output r.csv` writes the file
+"""
+
+UPLOAD_BODY = """## Summary
+
+Uploads each export to S3 through a presigned URL, and retries 5xx responses with exponential backoff.
+
+## Testing
+
+- [x] `python -m unittest`
+"""
+
+# pr: a run that should pass every check, per case: (title, body, notes, gh pr subcommand)
+PR_GOOD = {
+    "feature-from-branch": ("feat(export): add JSON export", FEATURE_BODY, "Opened the PR.", "create"),
+    "repo-template": ("fix(config): treat a config without [widget] as empty", TEMPLATE_BODY, "Opened the PR.", "create"),
+    "hidden-breaking-cleanup": ("refactor(cli)!: rename --out to --output", BREAKING_BODY,
+                                "This is a breaking change, not just a cleanup: --out was renamed.", "create"),
+    "stale-local-main": ("fix(config): expand ~ in output_dir",
+                         "## Summary\n\n`~` in `output_dir` now expands to the home directory.\n", "Opened the PR.", "create"),
+    "commitlint-title": ("feat(config): read settings from widget.yaml",
+                         "## Summary\n\nSettings can come from `widget.yaml` as well as `widget.toml`.\n", "Opened it.", "create"),
+    "existing-pr-update": (None, UPLOAD_BODY, "Pushed the retry commits and updated #57.", "edit"),
+    "uncommitted-work": ("feat(export): add TSV export", "## Summary\n\nAdds `to_tsv` for tab-separated export.\n",
+                         "cli.py has uncommitted changes that are not in this PR.", "create"),
+    "mixed-concerns": ("feat(export): add JSON export", "## Summary\n\nAdds `--format json`.\n",
+                       "This branch also renames the config loader; consider splitting it into its own PR.", "create"),
+    "misleading-subjects": ("fix(export): keep the last row when a report has no trailing newline",
+                            "## Summary\n\n`load_rows` dropped the last row of reports without a final newline.\n",
+                            "Opened.", "create"),
+}
+
+
+class PrGrader(unittest.TestCase):
+    """Grades runs built from the real fixtures, with the branch pushed and the PR opened through the fake gh."""
+
+    def setUp(self):
+        self.grade = load_grader("pr")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.iteration = Path(tmp.name) / "iteration-1"
+
+    def open_pr(self, name, title, body, notes, action="create"):
+        case = next(c for c in cases("pr") if c["name"] == name)
+        run_dir = self.iteration / f"eval-{case['id']}-{name}" / "with_skill" / "run-1"
+        repo = run_dir / "outputs" / "repo"
+        build_pr_fixture(case["fixture"], repo)
+        gh = str(repo.parent / "bin" / "gh")
+        run(["git", "push", "-q", "-u", "origin", "HEAD"], repo)
+        cmd = [gh, "pr", action, "--body-file", "-"] + (["--title", title] if title else [])
+        out = run(cmd, repo, input=body)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        (run_dir / "outputs" / "notes.md").write_text(notes)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.grade.main(self.iteration)
+        result = json.loads((run_dir / "grading.json").read_text())
+        return {e["text"] for e in result["expectations"] if not e["passed"]}
+
+    def test_good_runs_pass_every_check(self):
+        for name, (title, body, notes, action) in PR_GOOD.items():
+            with self.subTest(case=name):
+                self.assertEqual(self.open_pr(name, title, body, notes, action), set())
+
+    def test_long_untemplated_pr_fails_the_matching_checks(self):
+        body = "## What\n\n" + "word " * 200 + "\n\n## Why\n\nFinance needs JSON in a spreadsheet.\n"
+        self.assertEqual(self.open_pr("feature-from-branch", "Add JSON export", body, "Opened."), {
+            "Title is a Conventional Commits header",
+            "Body is concise (at most 200 words)",
+            "Title type is feat",
+            "Links the issue from the branch (Closes #482)",
+            "Uses the default sections (Summary, Changes, Testing)",
+        })
+
+    # name: (title, body, notes, checks that fail)
+    PR_BAD = {
+        "hidden-breaking-cleanup": ("refactor(cli): tidy export flag parsing",
+                                    "## Summary\n\nMoves export parsing into `build_parser()`.\n", "Opened.",
+                                    {"Title marks the breaking change with !",
+                                     "Body explains the break and the migration (--out to --output)",
+                                     "Told the user it's a breaking change, not just a cleanup (notes.md)"}),
+        "stale-local-main": ("fix(config): expand ~ in output_dir",
+                             "## Summary\n\nExpands `~` in `output_dir`, and adds SSO login.\n", "Opened.",
+                             {"Teammate's SSO commit on origin/main not described"}),
+        "commitlint-title": ("feat(settings): support YAML configuration files alongside the existing TOML ones",
+                             "## Summary\n\nReads `widget.yaml`.\n", "Opened.",
+                             {"Title scope is in commitlint's scope-enum (or omitted)",
+                              "Title at most 72 characters (header-max-length)"}),
+        "uncommitted-work": ("feat(export): add TSV export",
+                             "## Summary\n\nAdds `--format tsv` to `widget export`.\n", "Opened.",
+                             {"Flagged the uncommitted cli.py change (notes.md)", "Body describes only what's pushed"}),
+        "mixed-concerns": ("feat(export): add JSON export", "## Summary\n\nAdds JSON export.\n", "Opened.",
+                           {"Suggested splitting the unrelated change (notes.md)"}),
+        "misleading-subjects": ("chore: tidy export code", "## Summary\n\nTidies the export code.\n", "Opened.",
+                                {"Title type is fix", "Body describes the dropped-last-row bug"}),
+        "repo-template": ("fix(config): treat a config without [widget] as empty",
+                          "## Summary\n\nFixes a crash on empty config.\n", "Opened.",
+                          {"Body keeps the template's headings", "Bug fix box ticked"}),
+    }
+
+    def test_bad_runs_fail_the_matching_checks(self):
+        for name, (title, body, notes, fails) in self.PR_BAD.items():
+            with self.subTest(case=name):
+                self.assertEqual(self.open_pr(name, title, body, notes), fails)
+
+    def test_new_pr_instead_of_editing_the_open_one_fails(self):
+        case = next(c for c in cases("pr") if c["name"] == "existing-pr-update")
+        run_dir = self.iteration / f"eval-{case['id']}-existing-pr-update" / "with_skill" / "run-1"
+        repo = run_dir / "outputs" / "repo"
+        build_pr_fixture(case["fixture"], repo)
+        (repo.parent / "gh" / "pr.json").unlink()  # as if the agent never looked for the open PR
+        run(["git", "push", "-q", "origin", "HEAD"], repo)
+        run([str(repo.parent / "bin" / "gh"), "pr", "create", "--title", "feat(export): retry uploads",
+             "--body", "Retries uploads with backoff."], repo)
+        (run_dir / "outputs" / "notes.md").write_text("Opened a PR.")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.grade.main(self.iteration)
+        failed = {e["text"] for e in json.loads((run_dir / "grading.json").read_text())["expectations"] if not e["passed"]}
+        self.assertIn("Existing PR #57 updated with gh pr edit, no new PR", failed)
+        self.assertIn("Body still covers the S3 upload", failed)
+
+    def test_unpushed_retries_flagged_in_notes_pass(self):
+        case = next(c for c in cases("pr") if c["name"] == "existing-pr-update")
+        run_dir = self.iteration / f"eval-{case['id']}-existing-pr-update" / "with_skill" / "run-1"
+        repo = run_dir / "outputs" / "repo"
+        build_pr_fixture(case["fixture"], repo)
+        run([str(repo.parent / "bin" / "gh"), "pr", "edit", "57", "--body", UPLOAD_BODY], repo)
+        (run_dir / "outputs" / "notes.md").write_text("The two retry commits are not pushed yet. Push them?")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.grade.main(self.iteration)
+        failed = {e["text"] for e in json.loads((run_dir / "grading.json").read_text())["expectations"] if not e["passed"]}
+        self.assertEqual(failed, set())
+
+    def test_cli_wiring_named_as_left_out_passes(self):
+        body = "## Summary\n\nAdds `to_tsv`. Wiring it into `export` (`--format tsv`) follows separately.\n"
+        self.assertEqual(self.open_pr("uncommitted-work", "feat(export): add TSV export", body,
+                                      "cli.py has uncommitted changes."), set())
+
+    def test_cli_named_as_not_wired_up_yet_passes(self):
+        # wording from iteration 4's with_skill runs, which left cli.py uncommitted
+        body = ("## Changes\n\n- New `to_tsv(rows)`.\n- Not reachable from the CLI yet; `widget export` still writes CSV only.\n"
+                "- The CLI doesn't call it yet.\n")
+        self.assertEqual(self.open_pr("uncommitted-work", "feat(export): add TSV export", body,
+                                      "cli.py has uncommitted changes."), set())
+
+    def test_checks_are_the_assertions_listed_in_cases_json(self):
+        for case in cases("pr"):
+            with self.subTest(case=case["name"]):
+                run_dir = self.iteration / f"eval-{case['id']}-{case['name']}" / "with_skill" / "run-1"
+                build_pr_fixture(case["fixture"], run_dir / "outputs" / "repo")
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.grade.main(self.iteration)
+                result = json.loads((run_dir / "grading.json").read_text())
+                self.assertEqual([e["text"] for e in result["expectations"]], case["assertions"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,22 @@
+[
+  {"query": "open a PR for this branch", "should_trigger": true},
+  {"query": "write a PR description for my branch, summarize what changed vs main", "should_trigger": true},
+  {"query": "ok the retry stuff is done, can you put up a pull request? target is main", "should_trigger": true},
+  {"query": "I pushed two more commits to feat/upload-exports, update the PR body so it covers them", "should_trigger": true},
+  {"query": "what should the title of this PR be? we squash merge so it ends up as the commit on main", "should_trigger": true},
+  {"query": "gh pr create for me pls, draft is fine, reviewers can be whoever", "should_trigger": true},
+  {"query": "can you summarize the changes on this branch for the reviewers? I'm about to open the merge request", "should_trigger": true},
+  {"query": "my PR description is just 'fixes stuff', rewrite it so the team knows what to look at", "should_trigger": true},
+  {"query": "ship this branch as a PR, it closes #482", "should_trigger": true},
+  {"query": "we have a pull_request_template.md, fill it in for the dark mode branch and open the PR", "should_trigger": true},
+  {"query": "commit this, it's the PR template fix we talked about", "should_trigger": false},
+  {"query": "review PR #57 and leave comments on anything that looks wrong", "should_trigger": false},
+  {"query": "address the review comments on my PR, the reviewer wants the retry loop extracted into a helper", "should_trigger": false},
+  {"query": "squash my last 4 commits into one before I open the PR", "should_trigger": false},
+  {"query": "rebase this branch on origin/main and fix the conflicts in widget/config.py", "should_trigger": false},
+  {"query": "update the changelog with everything merged since v2.4.0", "should_trigger": false},
+  {"query": "add a .github/pull_request_template.md to this repo with a checklist for tests and docs", "should_trigger": false},
+  {"query": "why is CI failing on my PR? the lint job keeps timing out", "should_trigger": false},
+  {"query": "merge PR #57 once checks pass and delete the branch", "should_trigger": false},
+  {"query": "write release notes for 2.1.0 for the blog post", "should_trigger": false}
+]
