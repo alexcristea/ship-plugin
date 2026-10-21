@@ -1,6 +1,7 @@
 ---
 name: changelog
-description: Create or update the project's CHANGELOG.md from git history, turning commits since the last release tag (Conventional Commits or not) into reader-facing entries in Keep a Changelog format, or in whatever format the file already uses. Use this skill whenever the user wants a changelog written, started, caught up, or checked, says things like "update the changelog", "add this to CHANGELOG.md", "what changed since v1.2? put it in the changelog", "we don't have a changelog, make one", or wants entries moved into a version section for an upcoming release ("get the changelog ready for 1.3.0"). Accepts an optional version or bump (1.3.0, major, minor, patch) to cut a release section. Not for writing commit messages, tagging or publishing releases, or configuring tools like semantic-release or release-please.
+description: >-
+  Create or update the project's CHANGELOG.md from git history, turning commits since the last release tag (Conventional Commits or not) into reader-facing entries in Keep a Changelog format, or in whatever format the file already uses. Use this skill whenever the user wants a changelog written, started, caught up, or checked, says things like "update the changelog", "add this to CHANGELOG.md", "what changed since v1.2? put it in the changelog", "we don't have a changelog, make one", or wants entries moved into a version section for an upcoming release ("get the changelog ready for 1.3.0"). Accepts an optional version or bump (1.3.0, major, minor, patch) to cut a release section. Not for writing commit messages, tagging or publishing releases, or configuring tools like semantic-release or release-please.
 argument-hint: "[version | major | minor | patch]"
 ---
 

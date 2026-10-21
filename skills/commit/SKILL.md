@@ -1,6 +1,7 @@
 ---
 name: commit
-description: Write git commit messages that follow the Conventional Commits 1.0.0 spec (type(scope)!: description, body, footers like BREAKING CHANGE), honoring any commitlint or commitizen config in the repo, then commit once the user approves. Use this skill whenever the user wants to commit, asks for a commit message, says things like "commit this", "write a commit msg", "what should I call this commit", "wrap this up in a commit", or finishes a coding task and wants it committed — even if they never mention "conventional commits". Also use it to revert a commit with a proper message, and to check or fix (reword) an existing commit message against the spec.
+description: >-
+  Write git commit messages that follow the Conventional Commits 1.0.0 spec (type(scope)!: description, body, footers like BREAKING CHANGE), honoring any commitlint or commitizen config in the repo, then commit once the user approves. Use this skill whenever the user wants to commit, asks for a commit message, says things like "commit this", "write a commit msg", "what should I call this commit", "wrap this up in a commit", or finishes a coding task and wants it committed — even if they never mention "conventional commits". Also use it to revert a commit with a proper message, and to check or fix (reword) an existing commit message against the spec.
 ---
 
 # Conventional Commits

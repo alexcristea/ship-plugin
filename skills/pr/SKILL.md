@@ -1,6 +1,7 @@
 ---
 name: pr
-description: Write a short title and description for the current branch's pull request and open it with gh once the user approves, or rewrite the description of the branch's open PR after new commits. The title is a Conventional Commits header, because a squash merge turns it into the commit on main. The body follows the repo's pull_request_template.md when there is one and flags breaking changes. Use this skill whenever the user wants to open, create, put up or ship a PR or merge request, asks for a PR title, description or a summary of the branch for reviewers, or wants an existing PR description updated, even if they never say "description". Not for reviewing a PR, addressing review comments, merging, squashing or rebasing, writing commit messages or changelogs, or creating a PR template.
+description: >-
+  Write a short title and description for the current branch's pull request and open it with gh once the user approves, or rewrite the description of the branch's open PR after new commits. The title is a Conventional Commits header, because a squash merge turns it into the commit on main. The body follows the repo's pull_request_template.md when there is one and flags breaking changes. Use this skill whenever the user wants to open, create, put up or ship a PR or merge request, asks for a PR title, description or a summary of the branch for reviewers, or wants an existing PR description updated, even if they never say "description". Not for reviewing a PR, addressing review comments, merging, squashing or rebasing, writing commit messages or changelogs, or creating a PR template.
 ---
 
 # Pull request
