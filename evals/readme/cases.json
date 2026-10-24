@@ -1,0 +1,45 @@
+{
+  "skill_name": "readme",
+  "evals": [
+    {
+      "id": 0,
+      "name": "new-readme",
+      "fixture": "new_readme.sh",
+      "prompt": "we've got a new dev starting monday and this repo has no README. can you write one so they can get set up on their own?",
+      "expected_output": "A new README.md with a quick start that installs, copies .env.example, starts Postgres with docker compose and runs npm run db:migrate before npm run dev; Node 22 as a prerequisite; every variable from .env.example documented without the secret from .env; only scripts that exist in package.json; concise. Not committed.",
+      "files": [],
+      "assertions": [
+        "Only README.md was changed",
+        "Nothing committed",
+        "README shown for review (notes.md)",
+        "Every npm command in the README exists in package.json",
+        "No secret value copied from .env",
+        "README.md created with a quick start section",
+        "Database started and migrated before the app runs",
+        "Node 22 named as a prerequisite",
+        "Every variable in .env.example documented",
+        "Concise (at most 600 words)"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "stale-readme",
+      "fixture": "stale_readme.sh",
+      "prompt": "our README is out of date, the new hire got stuck following it yesterday. can you fix it?",
+      "expected_output": "README.md updated in place: npm start replaced with npm run dev, Node 18 with Node 22, docker compose and npm run db:migrate added, SENDGRID_WEBHOOK_SECRET documented; the On-call section and existing headings kept as written. Not committed.",
+      "files": [],
+      "assertions": [
+        "Only README.md was changed",
+        "Nothing committed",
+        "README shown for review (notes.md)",
+        "Every npm command in the README exists in package.json",
+        "No secret value copied from .env",
+        "Node version updated to 22",
+        "Migration step added before the app runs",
+        "SENDGRID_WEBHOOK_SECRET documented",
+        "On-call section kept as written",
+        "Existing headings kept"
+      ]
+    }
+  ]
+}

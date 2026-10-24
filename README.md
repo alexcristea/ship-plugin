@@ -1,6 +1,6 @@
 # ship
 
-A Claude Code plugin for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. It has three skills: `commit` writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message, `changelog` turns the commits since the last release into `CHANGELOG.md` entries, and `pr` writes a short pull request description and opens the PR once you approve it.
+A Claude Code plugin for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. It has four skills: `commit` writes git commit messages following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) and makes the commit once you approve the message, `changelog` turns the commits since the last release into `CHANGELOG.md` entries, `pr` writes a short pull request description and opens the PR once you approve it, and `readme` writes or fixes a `README.md` that gets a new teammate from clone to running app.
 
 You say "commit this". Claude reads the staged diff, checks the repo's commitlint or commitizen config, drafts a `type(scope)!: description` message with a body and footers where they help, shows it to you, and commits on your OK.
 
@@ -11,8 +11,9 @@ You say "commit this". Claude reads the staged diff, checks the repo's commitlin
 | `/ship:commit` | Draft a Conventional Commits message for the staged changes, then commit once you approve it. Also handles reverts and rewording existing messages. |
 | `/ship:changelog [version \| major \| minor \| patch]` | Add the changes since the last release to `CHANGELOG.md` under `[Unreleased]`. With a version or bump, also cut a dated release section. |
 | `/ship:pr` | Write a concise PR title and description for the branch, then open the PR with `gh` once you approve, or update the open one. |
+| `/ship:readme` | Write a `README.md` for onboarding, or fix a stale one, using the commands, versions and env vars the project actually has. |
 
-You rarely need the slash commands. The skills trigger on ordinary requests such as "commit this", "what should I call this commit?", "update the changelog", "get the changelog ready for 1.3.0" or "open a PR", even when you never mention Conventional Commits.
+You rarely need the slash commands. The skills trigger on ordinary requests such as "commit this", "what should I call this commit?", "update the changelog", "get the changelog ready for 1.3.0", "open a PR" or "our README is out of date", even when you never mention Conventional Commits.
 
 ## Prerequisites
 
@@ -49,6 +50,8 @@ claude --plugin-dir "$PWD/ship-plugin"
 | "put up a PR" in a repo with `.github/pull_request_template.md`           | Fills in your template instead of the default layout.                                              |
 | "open a PR, it's just a cleanup"                                          | If the diff renames a flag or drops an export, it marks the title with `!`, adds a breaking-changes note with the migration, and tells you. |
 | "I pushed more commits, update the PR description"                        | Finds the open PR and rewrites its description with `gh pr edit` instead of opening a second PR.   |
+| "a new dev starts Monday, write a README so they can get set up"          | Reads the manifests, scripts, CI and `.env.example`, then writes a quick start from clone to passing tests, an env var table and the project layout. Uses only commands that exist, never copies values from `.env`, and leaves a TODO where it can't find something out (who to ask, how to deploy). |
+| "the README is out of date, the new hire got stuck"                       | Fixes stale commands, versions and missing steps in place, and keeps sections it can't verify from the code (on-call, deploy notes) as written. |
 
 ## What the skill follows
 
@@ -69,6 +72,8 @@ It applies the rules that shape a message: `type-enum`, `scope-enum`, `scope-emp
 **It stays local.** The skill never pushes, never passes `--no-verify`, and never amends a commit that has already been pushed. If a commit-msg hook rejects the message, it fixes the message and tries again.
 
 **PR titles are commit messages.** With squash merges the PR title becomes the commit on `main`, so `pr` writes it as a Conventional Commits header that passes the repo's commitlint config, and `changelog` can read it later.
+
+**READMEs are for onboarding.** A new teammate should get from a fresh clone to a running app and passing tests by following the README top to bottom. Every command comes from the project's scripts, Makefile or CI, because a wrong command costs more than a missing one, and detail lives in `CONTRIBUTING.md` or `docs/` rather than being copied in.
 
 **PR descriptions are short.** A reviewer should read one in under a minute: why the change is needed, what could break, what to check. Sections that would be empty are left out.
 
@@ -103,6 +108,14 @@ skills/changelog/
 ```
 skills/pr/
 └── SKILL.md              # the workflow: find the base, check the template and commitlint, write title and body, confirm, push, open
+```
+
+```
+skills/readme/
+├── SKILL.md              # the workflow: read the project, create or update, write, report
+└── references/
+    ├── template.md       # the README skeleton, section by section
+    └── example.md        # a finished README for a small service
 ```
 
 `changelog` builds on `commit`: the types, `!` markers and `BREAKING CHANGE:` footers that `commit` writes are what `changelog` sorts on. It also handles history that doesn't follow Conventional Commits, by reading the diff.
