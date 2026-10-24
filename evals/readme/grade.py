@@ -14,6 +14,8 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parent.name  # evals/<skill>/grade.py
 ROOT = Path(__file__).resolve().parents[2]
 NPM_RE = re.compile(r"\bnpm (?:run(?:-script)? ([\w:.-]+)|(start|test|t|stop|restart)\b)")
+# prose that warns a command is gone ("There is no `npm start`; use `npm run dev`") isn't telling anyone to run it
+NEGATED_RE = re.compile(r"\b(?:no|not|never|instead of|replaces|replaced|removed)\b|n't\b", re.I)
 
 
 def git(repo, *args):
@@ -44,8 +46,18 @@ def env_example(repo):
 
 
 def npm_commands(text):
-    """Scripts the README runs: `npm run x` -> x, `npm start` / `npm test` -> start / test."""
-    return [run or {"t": "test"}.get(short, short) for run, short in NPM_RE.findall(text)]
+    """Scripts the README runs: `npm run x` -> x, `npm start` / `npm test` -> start / test.
+
+    Every command in a fenced code block counts; in prose, lines that say a command doesn't exist are skipped.
+    """
+    found, fenced = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced or not NEGATED_RE.search(line):
+            found += [run or {"t": "test"}.get(short, short) for run, short in NPM_RE.findall(line)]
+    return found
 
 
 def section(text, title):
