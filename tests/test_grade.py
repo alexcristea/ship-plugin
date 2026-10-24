@@ -605,5 +605,103 @@ class PrGrader(unittest.TestCase):
                 self.assertEqual([e["text"] for e in result["expectations"]], case["assertions"])
 
 
+README_NEW = """# notify-service
+
+Sends transactional emails for the Acme apps through SendGrid.
+
+## Quick start
+
+**Prerequisites:** Node 22 (see `.nvmrc`), Docker.
+
+```sh
+npm ci
+cp .env.example .env
+docker compose up -d db
+npm run db:migrate
+npm run dev
+```
+
+Run the tests with `npm test`.
+
+## Configuration
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `DATABASE_URL` | yes | in `.env.example` | Postgres connection |
+| `SENDGRID_API_KEY` | yes | | SendGrid key |
+| `MAIL_FROM` | no | `no-reply@example.com` | Sender address |
+| `PORT` | no | `3000` | HTTP port |
+"""
+
+
+class ReadmeGrader(unittest.TestCase):
+    """Grades runs built from the real fixtures, with README.md written by hand."""
+
+    def setUp(self):
+        self.grade = load_grader("readme")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.iteration = Path(tmp.name) / "iteration-1"
+
+    def grade_readme(self, name, edit):
+        case = next(c for c in cases("readme") if c["name"] == name)
+        run_dir = self.iteration / f"eval-{case['id']}-{case['name']}" / "with_skill" / "run-1"
+        repo = run_dir / "outputs" / "repo"
+        subprocess.run(["bash", str(EVALS / "readme" / "fixtures" / case["fixture"]), str(repo)],
+                       check=True, capture_output=True)
+        path = repo / "README.md"
+        path.write_text(edit(path.read_text() if path.exists() else ""))
+        (run_dir / "outputs" / "notes.md").write_text(f"```markdown\n{path.read_text()}```\n")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.grade.main(self.iteration)
+        result = json.loads((run_dir / "grading.json").read_text())
+        return case, result, {e["text"] for e in result["expectations"] if not e["passed"]}
+
+    def test_good_new_readme_passes_every_check(self):
+        _, _, failed = self.grade_readme("new-readme", lambda _: README_NEW)
+        self.assertEqual(failed, set())
+
+    def test_invented_start_and_copied_secret_fail(self):
+        bad = README_NEW.replace("npm run dev", "npm start").replace("| SendGrid key", "| e.g. SG.live-4f9c2e7a1b8d6053")
+        _, _, failed = self.grade_readme("new-readme", lambda _: bad)
+        self.assertEqual(failed, {
+            "Every npm command in the README exists in package.json",
+            "No secret value copied from .env",
+            "Database started and migrated before the app runs",
+        })
+
+    def test_long_readme_fails_concise(self):
+        _, _, failed = self.grade_readme("new-readme", lambda _: README_NEW + "\nLorem ipsum." * 300)
+        self.assertEqual(failed, {"Concise (at most 600 words)"})
+
+    def fix_stale(self, text):
+        return (text.replace("You need Node 18.", "You need Node 22 and Docker.")
+                .replace("npm install", "npm ci")
+                .replace("npm start", "docker compose up -d db\nnpm run db:migrate\nnpm run dev")
+                .replace("- `MAIL_FROM`: sender address",
+                         "- `MAIL_FROM`: sender address\n- `SENDGRID_WEBHOOK_SECRET`: signs SendGrid event webhooks"))
+
+    def test_good_stale_update_passes_every_check(self):
+        _, _, failed = self.grade_readme("stale-readme", self.fix_stale)
+        self.assertEqual(failed, set())
+
+    def test_rewrite_that_drops_on_call_and_keeps_stale_lines_fails(self):
+        _, _, failed = self.grade_readme("stale-readme", lambda text: text.split("## On-call")[0])
+        self.assertEqual(failed, {
+            "Every npm command in the README exists in package.json",
+            "Node version updated to 22",
+            "Migration step added before the app runs",
+            "SENDGRID_WEBHOOK_SECRET documented",
+            "On-call section kept as written",
+            "Existing headings kept",
+        })
+
+    def test_checks_are_the_assertions_listed_in_cases_json(self):
+        for case in cases("readme"):
+            with self.subTest(case=case["name"]):
+                case, result, _ = self.grade_readme(case["name"], lambda text: text)
+                self.assertEqual([e["text"] for e in result["expectations"]], case["assertions"])
+
+
 if __name__ == "__main__":
     unittest.main()
