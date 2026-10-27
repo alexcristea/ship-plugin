@@ -9,6 +9,10 @@
   {"query": "revert 3f2a91c, it broke the checkout flow on staging. give the revert a proper message not the default git one", "should_trigger": true},
   {"query": "husky keeps rejecting my commit: '✖ subject may not be empty [subject-empty] ✖ type may not be empty [type-empty]'. my message was 'Update README'. help", "should_trigger": true},
   {"query": "i changed stuff in packages/ui and packages/api, theyre unrelated. commit them separately with good messages", "should_trigger": true},
+  {"query": "rewrite the commit history on this branch with proper commit messages, then update the PR", "should_trigger": true},
+  {"query": "amend my last commit, the message is just 'wip'. it's not pushed yet", "should_trigger": true},
+  {"query": "the commits on my feature branch say 'fix', 'more changes' and 'asdf'. reword them into real messages before i open the PR", "should_trigger": true},
+  {"query": "i forgot to stage tests/test_parser.py. amend it into the last commit and update the message so it mentions the tests", "should_trigger": true},
   {"query": "write a CHANGELOG.md section for v2.3.0 from these merged PR titles: 'Add dark mode', 'Fix login redirect loop', 'Bump axios'", "should_trigger": false},
   {"query": "set up commitlint and husky in this repo so that everyone's commit messages get enforced on commit", "should_trigger": false},
   {"query": "how do I squash my last 3 commits into one? i think its git rebase -i but i always mess it up", "should_trigger": false},
@@ -18,5 +22,6 @@
   {"query": "undo my last commit but keep the changes staged, i committed to main by accident instead of my feature branch", "should_trigger": false},
   {"query": "use git bisect to find which commit introduced the bug where dates show in UTC instead of local time on the invoices page", "should_trigger": false},
   {"query": "write a python script that reads our git log and counts commits per conventional commit type per month, output as csv for a dashboard", "should_trigger": false},
-  {"query": "explain what the 'BREAKING CHANGE' footer means in conventional commits and how it differs from using '!' — just curious, not committing anything", "should_trigger": false}
+  {"query": "explain what the 'BREAKING CHANGE' footer means in conventional commits and how it differs from using '!' — just curious, not committing anything", "should_trigger": false},
+  {"query": "change the author email on my last 5 commits from my personal address to my work one, the messages are fine", "should_trigger": false}
 ]
