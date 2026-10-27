@@ -8,7 +8,7 @@ You say "commit this". Claude reads the staged diff, checks the repo's commitlin
 
 | Skill          | Purpose                                                                                       |
 |----------------|-----------------------------------------------------------------------------------------------|
-| `/ship:commit` | Draft a Conventional Commits message for the staged changes, then commit once you approve it. Also handles reverts and rewording existing messages. |
+| `/ship:commit` | Draft a Conventional Commits message for the staged changes, then commit once you approve it. Also handles reverts, amends and rewording existing messages, including a whole branch before a PR. |
 | `/ship:changelog [version \| major \| minor \| patch]` | Add the changes since the last release to `CHANGELOG.md` under `[Unreleased]`. With a version or bump, also cut a dated release section. |
 | `/ship:pr` | Write a concise PR title and description for the branch, then open the PR with `gh` once you approve, or update the open one. |
 | `/ship:readme` | Write a `README.md` for onboarding, or fix a stale one, using the commands, versions and env vars the project actually has. |
