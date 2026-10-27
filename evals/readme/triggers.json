@@ -1,0 +1,22 @@
+[
+  {"query": "write a README for this repo, there's nothing there yet", "should_trigger": true},
+  {"query": "we have a new backend dev starting next week. can you document how to get this project running locally?", "should_trigger": true},
+  {"query": "the setup steps in the README don't work anymore, npm start fails. fix the readme", "should_trigger": true},
+  {"query": "our README.md still says python 3.9 and mentions the old docker setup, can you bring it up to date", "should_trigger": true},
+  {"query": "add a getting started section to the readme with the env vars people need", "should_trigger": true},
+  {"query": "make onboarding docs for this service so new teammates don't have to ping me", "should_trigger": true},
+  {"query": "check if the readme matches how the project actually runs now", "should_trigger": true},
+  {"query": "the README is a wall of text, rewrite it so someone new can follow it in 5 minutes", "should_trigger": true},
+  {"query": "document the env variables and make targets in README.md", "should_trigger": true},
+  {"query": "i just inherited this repo and there's no docs. write up a readme explaining what it is and how to run the tests", "should_trigger": true},
+  {"query": "update the changelog with what we shipped this week", "should_trigger": false},
+  {"query": "commit this, it's just a typo fix in the README", "should_trigger": false},
+  {"query": "write a PR description for my branch that updates the docs", "should_trigger": false},
+  {"query": "add JSDoc comments to every exported function in src/", "should_trigger": false},
+  {"query": "generate API reference docs with sphinx autodoc for the package", "should_trigger": false},
+  {"query": "write a CLAUDE.md for this repo so claude code knows the conventions", "should_trigger": false},
+  {"query": "make me a GitHub profile README with my projects and a stats card", "should_trigger": false},
+  {"query": "explain how the auth middleware in this repo works, i'm new here", "should_trigger": false},
+  {"query": "set up mkdocs with material theme and deploy it to github pages", "should_trigger": false},
+  {"query": "get this project running on my machine, npm install keeps failing", "should_trigger": false}
+]
