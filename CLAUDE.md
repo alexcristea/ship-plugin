@@ -52,7 +52,7 @@ Grade a finished eval iteration (writes `grading.json` per run and `run.json` wi
 python3 evals/<skill>/grade.py .eval-runs/<skill>/iteration-<N> --model <model-id>
 ```
 
-Trigger eval for the description, run from skill-creator's `skills/skill-creator` directory. Keep `--num-workers 1`: parallel workers write near-identical temp skills to the same commands folder and corrupt results. Run from a scratch dir with its own `.claude/`.
+Trigger eval for the description, run from skill-creator's `skills/skill-creator` directory. Keep `--num-workers 1`: parallel workers write near-identical temp skills to the same commands folder and corrupt results. Run from a scratch dir with its own `.claude/`, and disable an installed `ship` plugin in that dir's `.claude/settings.json` (`"enabledPlugins": {"ship@<marketplace>": false}`), or Claude picks the installed skill and the run counts as a miss.
 
 ```sh
 python3 -m scripts.run_eval \
