@@ -1,5 +1,7 @@
 # usage: source common.sh <repo_path>
 set -e
+# REPO is deleted below, and an empty path resolves to the current directory
+[ -n "${1:-}" ] || { echo "usage: source common.sh <repo_path>" >&2; return 1 2>/dev/null || exit 1; }
 SHARED="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$(dirname "$1")" 2>/dev/null && pwd || (mkdir -p "$(dirname "$1")" && cd "$(dirname "$1")" && pwd))/$(basename "$1")"; rm -rf "$REPO"; mkdir -p "$REPO"; cd "$REPO"
 git init -q -b main

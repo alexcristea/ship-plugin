@@ -308,6 +308,26 @@ class ChangelogFixtures(unittest.TestCase):
 
 
 
+class SharedFixtureSetup(unittest.TestCase):
+    """common.sh deletes the repo path it is given, so a missing path must stop it before it deletes the current directory."""
+
+    def assert_refuses_and_keeps_cwd(self, cmd):
+        with tempfile.TemporaryDirectory() as tmp:
+            keep = Path(tmp) / "keep.txt"
+            keep.write_text("work in progress\n")
+            out = run(cmd, tmp)
+            self.assertNotEqual(out.returncode, 0)
+            self.assertIn("usage", out.stderr)
+            self.assertTrue(keep.is_file(), "common.sh deleted the current directory")
+            self.assertFalse((Path(tmp) / ".git").exists())
+
+    def test_sourcing_without_a_path_refuses(self):
+        self.assert_refuses_and_keeps_cwd(["bash", "-c", f'source "{EVALS / "shared" / "common.sh"}"'])
+
+    def test_fixture_without_a_path_refuses(self):
+        self.assert_refuses_and_keeps_cwd(["bash", str(EVALS / "commit" / "fixtures" / "bugfix_no_config.sh")])
+
+
 class PrFixtures(unittest.TestCase):
     """PR fixtures must hold the trap their eval is about, and stay offline."""
 
