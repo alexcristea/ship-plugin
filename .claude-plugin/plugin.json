@@ -1,6 +1,6 @@
 {
   "name": "ship",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Skills for trunk-based development: atomic commits, small PRs and a main branch that's always releasable. commit: write Conventional Commits 1.0.0 messages that respect the repo's commitlint/commitizen config. changelog: turn the commits since the last release into CHANGELOG.md entries. pr: write a short PR description with a Conventional Commits title and open or update the PR with gh. readme: write or update a README.md that onboards a new teammate from clone to running app.",
   "author": {
     "name": "Alex Cristea",
