@@ -670,6 +670,16 @@ class ReadmeGrader(unittest.TestCase):
             "Database started and migrated before the app runs",
         })
 
+    def test_warning_that_npm_start_is_gone_counts_as_correct(self):
+        text = README_NEW + "\nThere is no `npm start` script; use `npm run dev`.\n"
+        _, _, failed = self.grade_readme("new-readme", lambda _: text)
+        self.assertEqual(failed, set())
+
+    def test_npm_start_in_a_code_block_fails_even_beside_a_negation(self):
+        text = README_NEW + "\nDon't forget:\n\n```sh\nnpm start   # not dev\n```\n"
+        _, _, failed = self.grade_readme("new-readme", lambda _: text)
+        self.assertEqual(failed, {"Every npm command in the README exists in package.json"})
+
     def test_long_readme_fails_concise(self):
         _, _, failed = self.grade_readme("new-readme", lambda _: README_NEW + "\nLorem ipsum." * 300)
         self.assertEqual(failed, {"Concise (at most 600 words)"})
