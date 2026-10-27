@@ -1,0 +1,24 @@
+{
+  "skill": "readme",
+  "behavior": {
+    "skill_sha": "efdce48",
+    "model": "claude-opus-5-5",
+    "date": "2026-10-24",
+    "evals": 2,
+    "runs_per_configuration": 3,
+    "baseline_config": "without_skill",
+    "pass_rate": {
+      "with_skill": 1.0,
+      "without_skill": 0.8
+    },
+    "note": "Graded with the grader from dd6addd, which no longer counts 'There is no `npm start`' as running it. Discriminating checks: Nothing committed (without_skill committed in 4/6 runs), README shown for review (0/6 without_skill), Concise at most 600 words (new-readme without_skill 604 and 628 words; with_skill 373-422). Content checks (real commands, migrate before dev, Node 22, env vars, no secrets, On-call kept) pass in both configurations, so this fixture doesn't separate them on content."
+  },
+  "triggers": {
+    "skill_sha": "efdce48",
+    "model": "claude-opus-5-5",
+    "date": "2026-10-24",
+    "passed": 20,
+    "total": 20,
+    "note": "2 runs per query, --num-workers 1. All 10 positives triggered 2/2; none of the 10 near misses triggered."
+  }
+}
