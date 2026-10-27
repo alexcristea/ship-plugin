@@ -184,7 +184,7 @@ When a change to the skill is accepted, update `evals/<skill>/baseline.json` wit
 
 ### Trigger eval
 
-`evals/commit/triggers.json` has 10 queries that should trigger the skill and 10 near misses. Run it from skill-creator's `skills/skill-creator` directory:
+`evals/commit/triggers.json` has 14 queries that should trigger the skill and 11 near misses. Run it from skill-creator's `skills/skill-creator` directory:
 
 ```sh
 python3 -m scripts.run_eval \
@@ -195,7 +195,15 @@ python3 -m scripts.run_eval \
 
 Keep `--num-workers 1`. With parallel workers, every run writes a near-identical temporary skill into the same commands folder. Claude then picks another run's copy and the result is recorded as a miss, which made recall look like ~10% when it was really 95%. For the same reason, skill-creator's `run_loop` description optimizer isn't usable here yet.
 
-A full serial run makes about 40 `claude -p` calls. Run it from a scratch directory that has its own `.claude/`, so the temporary commands don't land in `~/.claude/commands`.
+A full serial run makes about 50 `claude -p` calls. Run it from a scratch directory that has its own `.claude/`, so the temporary commands don't land in `~/.claude/commands`.
+
+If `ship` is installed as a plugin, disable it for the eval in that scratch directory's `.claude/settings.json`:
+
+```json
+{"enabledPlugins": {"ship@<marketplace>": false}}
+```
+
+Otherwise Claude can pick the installed `ship:commit`, which has the old description, instead of the temporary copy, and the run is recorded as a miss. With the plugin enabled, 8 of the 10 original positives scored 0/2.
 
 ## Commit messages
 
