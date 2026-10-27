@@ -9,11 +9,11 @@
     "pass_rate": { "with_skill": 1.0, "without_skill": 0.88 }
   },
   "triggers": {
-    "skill_sha": "07bb565",
-    "model": null,
-    "date": "2026-10-16",
-    "passed": 19,
-    "total": 20,
-    "note": "Stale: the description changed in cdebe51 (revert requests) and the full trigger set has not been re-run since."
+    "skill_sha": "ead40fa",
+    "model": "claude-opus-5-5",
+    "date": "2026-10-27",
+    "passed": 25,
+    "total": 25,
+    "note": "2 runs per query, --num-workers 1, installed ship plugin disabled in the scratch dir. All 14 positives triggered (husky rejection 1/2); none of the 11 near misses did. The previous description scored 24/25 on this set: 'rewrite the commit history ... with proper commit messages' 0/2."
   }
 }
