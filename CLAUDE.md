@@ -79,3 +79,4 @@ Adding an eval means touching all three: fixture script, `cases.json` entry, and
 - TDD for skill changes: add or tighten an eval that fails, then change `SKILL.md` until it passes. PRs changing `SKILL.md` include before/after eval scores; description changes include trigger eval results.
 - Update `README.md` in the same change when behavior changes.
 - Commits use Conventional Commits; see `CONTRIBUTING.md` for the scope.
+- A skill change lands as three commits: `test(ship)` adding eval or trigger cases, then `feat`/`fix(ship)` changing `SKILL.md`, then `test(ship)` recording results in `baseline.json` with `skill_sha` set to the skill commit. Bump the version in `.claude-plugin/plugin.json` in a separate `chore(ship)` commit (fix → patch, feat → minor).
